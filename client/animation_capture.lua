@@ -116,6 +116,7 @@ RegisterCommand('shotanimframes', function(_, args)
         while active and not HasAnimDictLoaded(dict) and GetGameTimer() < deadline do Wait(50) end
         if not active or not HasAnimDictLoaded(dict) then
             notice('Animation dictionary unavailable or capture cancelled: ' .. dict)
+            lastCaptureResult = { ok = false, name = name, reason = 'animation dictionary unavailable or cancelled' }
             capturing = false; active = false; return
         end
         studioResult = nil
@@ -126,6 +127,7 @@ RegisterCommand('shotanimframes', function(_, args)
             notice('Studio unavailable: ' .. tostring(studioResult and studioResult.reason or 'cancelled or timeout'))
             TriggerEvent('pm-autoshot:client:closeAnimationStudio')
             RemoveAnimDict(dict)
+            lastCaptureResult = { ok = false, name = name, reason = 'studio unavailable or cancelled' }
             capturing = false; active = false; return
         end
         local ped = PlayerPedId()
