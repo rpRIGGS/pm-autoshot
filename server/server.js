@@ -282,6 +282,14 @@ function cleanupAnimationSessions() {
     }
 }
 setInterval(cleanupAnimationSessions, 60 * 1000);
+on('onResourceStop', (resourceName) => {
+    if (resourceName !== RESOURCE) return;
+    for (const [key, session] of animationSessions) {
+        if (session.encoding) session.cancelled = true;
+        else disposeAnimationSession(key);
+    }
+});
+
 on('playerDropped', () => {
     const prefix = String(source) + ':';
     for (const key of animationSessions.keys()) {
