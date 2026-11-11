@@ -245,7 +245,8 @@ RegisterCommand('shotanimbatch', function(_, args)
             if not batchActive then break end
             local entry = catalog[i]
             notice(('Batch %d/%d: %s (%s)'):format(i, last, entry.key, entry.category))
-            ExecuteCommand(('shotanimframes %s %s %d %d %s'):format(entry.dict, entry.clip, frames, interval, entry.key))
+            local outputName = (entry.category .. '_' .. entry.key):gsub('[^%w_-]', '_'):sub(1, 96)
+            ExecuteCommand(('shotanimframes %s %s %d %d %s'):format(entry.dict, entry.clip, frames, interval, outputName))
             local startDeadline = GetGameTimer() + 3000
             while batchActive and not capturing and GetGameTimer() < startDeadline do Wait(50) end
             local endDeadline = GetGameTimer() + 120000
@@ -255,7 +256,7 @@ RegisterCommand('shotanimbatch', function(_, args)
                 ExecuteCommand('shotanimstop')
                 break
             end
-            if not lastCaptureResult or not lastCaptureResult.ok or lastCaptureResult.name ~= entry.key then
+            if not lastCaptureResult or not lastCaptureResult.ok or lastCaptureResult.name ~= outputName then
                 notice('Batch stopped at ' .. entry.key .. ': ' .. tostring(lastCaptureResult and lastCaptureResult.reason or 'no completion result'))
                 break
             end
