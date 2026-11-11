@@ -15,7 +15,7 @@ function parseCatalog(source) {
         const rest = source.slice(start);
         const next = /(?:^|\n)\s*(?:RP|CustomDP)\.[A-Za-z]+\s*=\s*\{/m.exec(rest);
         const section = next ? rest.slice(0, next.index) : rest;
-        const entry = /\[["']([^"'\r\n]+)["']\]\s*=\s*\{/g;
+        const entry = /^    \[["']([^"'\r\n]+)["']\]\s*=\s*\{/gm;
         let match;
         while ((match = entry.exec(section))) {
             const key = match[1];
@@ -26,7 +26,7 @@ function parseCatalog(source) {
             // Inspect the complete entry until the next same-level declaration.
             // Nested animation options are not eligible for plain playback if
             // they require props, attached objects, or particle effects.
-            const nextEntry = /\n\s*\["'][^"'\r\n]+["']\s*=\s*\{/g;
+            const nextEntry = /\n    \["'][^"'\r\n]+["']\s*=\s*\{/g;
             const remaining = section.slice(entry.lastIndex);
             const following = nextEntry.exec(remaining);
             const detail = following ? remaining.slice(0, following.index) : remaining;
