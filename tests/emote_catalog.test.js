@@ -21,3 +21,25 @@ const custom = parseCatalog('CustomDP.Emotes = {\n    ["custom"] = { "custom@dic
 assert.equal(custom.length, 1);
 assert.equal(custom[0].key, 'custom');
 console.log('PM Emotes catalog parser fixture passed');
+
+const nested = parseCatalog(`
+RP.Emotes = {
+  ["nested"] = { "dict@nested", "idle", "Nested", AnimationOptions = {
+    EmoteLoop = true,
+    Options = { Extra = "{quoted}" }
+  }},
+  ["withprop"] = { "dict@prop", "idle", "Prop", AnimationOptions = {
+    Prop = "prop_foo", PropBone = 28422
+  }},
+  ["after"] = { "dict@after", "idle", "After" },
+}
+RP.Dances = { ["dance"] = { "dict@dance", "loop", "Dance" } }
+`);
+assert.deepEqual(nested.map(x => x.key), ['nested', 'after', 'dance']);
+const comments = parseCatalog(`
+RP.Emotes = {
+  -- braces in comments } { should not terminate the section
+  ["quoted"] = { "dict@quoted", "clip", "A } tricky label" },
+}
+`);
+assert.equal(comments.length, 1);
