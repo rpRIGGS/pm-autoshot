@@ -23,6 +23,21 @@ original emote names, including names containing spaces. It refuses
 ambiguous filenames when two keys sanitize to the same filename.
 The NUI resolves each image by `data-emotetype:data-emoteid`.
 
+## In-server readiness check
+
+With `pm-autoshot`, `pm-emotes`, and `screenshot-basic` started,
+run `/shotanimdoctor` in the FiveM client. The console reports whether
+`sharp`, `pngjs`, both resources, the writable output directory, and
+the installed PM Emotes catalog are available. This is a dependency
+check, not proof of successful image capture.
+
+Next, capture one simple emote using
+`/shotanimbatch 1 1 8 200` (or select the desired catalog index after
+`/shotanimcatalog`). Confirm a WebP appears under
+`shots/animations/`, deploy it with the installer above, restart
+PM Emotes, and verify the matching menu button displays an animated
+preview. Expand batches only after that smoke test succeeds.
+
 ## Capture status
 
 - Plain dictionary animations: direct `TaskPlayAnim` capture path.
