@@ -329,6 +329,10 @@ onNet('pm-autoshot:server:finishAnimation', async (payload) => {
         if (payload && typeof payload.name === 'string' && /^[a-zA-Z0-9_-]{1,96}$/.test(payload.name)) {
             const failed = animationSessions.get(animationKey(src, payload.name));
             if (failed) failed.encoding = false;
+            // An interrupted encoder must not leave an orphaned temporary WebP.
+            const partial = path.join(OUTPUT_DIR, 'animations', payload.name + '.webp.tmp-' + String(src));
+            try { if (fs.existsSync(partial)) fs.unlinkSync(partial); }
+            catch (cleanupError) { console.log('[PM AutoShot] Partial WebP cleanup failed: ' + cleanupError.message); }
         }
     }
     if (id !== undefined) emitNet('pm-autoshot:client:animationFinished', src, id, ok, detail);
