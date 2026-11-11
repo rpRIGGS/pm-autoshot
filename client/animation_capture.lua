@@ -50,6 +50,7 @@ end
 RegisterCommand('shotanimstop', function()
     active = false
     ClearPedTasksImmediately(PlayerPedId())
+    if capturing then TriggerEvent('pm-autoshot:client:closeAnimationStudio') end
     notice('Animation playback stopped')
 end, false)
 
@@ -97,6 +98,7 @@ RegisterCommand('shotanimframes', function(_, args)
     local count = math.floor(math.min(24, math.max(2, tonumber(args[3]) or 8)))
     local interval = math.floor(math.min(1000, math.max(100, tonumber(args[4]) or 200)))
     local name = (dict .. '_' .. clip):gsub('[^%w_-]', '_'):sub(1, 96)
+    if name == '' then notice('Invalid animation identifier'); return end
     capturing = true
     active = true
     CreateThread(function()
@@ -104,7 +106,7 @@ RegisterCommand('shotanimframes', function(_, args)
         local deadline = GetGameTimer() + 10000
         while active and not HasAnimDictLoaded(dict) and GetGameTimer() < deadline do Wait(50) end
         if not active or not HasAnimDictLoaded(dict) then
-            notice('Animation dictionary unavailable: ' .. dict)
+            notice('Animation dictionary unavailable or capture cancelled: ' .. dict)
             capturing = false; active = false; return
         end
         studioResult = nil
