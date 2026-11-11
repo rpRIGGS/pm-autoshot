@@ -436,7 +436,7 @@ onNet('pm-autoshot:server:animationFrame', (payload) => {
 
 
 // Lightweight runtime readiness check for the full preview pipeline.
-onNet('pm-autoshot:server:diagnoseAnimation', () => {
+onNet('pm-autoshot:server:diagnoseAnimation', async () => {
     const src = source;
     if (!checkAce(src)) return;
     const results = {
@@ -445,8 +445,10 @@ onNet('pm-autoshot:server:diagnoseAnimation', () => {
         emotes: GetResourceState('pm-emotes') === 'started',
         screenshot: GetResourceState('screenshot-basic') === 'started',
         outputWritable: false,
+        encoderFunctional: false,
         catalogCount: 0,
-        catalogError: null
+        catalogError: null,
+        encoderError: null
     };
     try {
         fs.mkdirSync(path.join(OUTPUT_DIR, 'animations'), { recursive: true });
@@ -457,6 +459,18 @@ onNet('pm-autoshot:server:diagnoseAnimation', () => {
     } catch (e) { results.catalogError = 'output path: ' + e.message; }
     try { results.catalogCount = require('./emote_catalog').readCatalog('pm-emotes').length; }
     catch (e) { results.catalogError = (results.catalogError ? results.catalogError + '; ' : '') + e.message; }
+    if (sharp) {
+        try {
+            const width = 4, height = 4;
+            const rgba = Buffer.alloc(width * height * 4);
+            rgba[0] = 255; rgba[3] = 255;
+            const encoded = await require('./animated_webp').encodeAnimation(sharp, [rgba, rgba], width, height, 100);
+            const metadata = await sharp(encoded, { animated: true }).metadata();
+            results.encoderFunctional = metadata.pages === 2 && metadata.pageHeight === height &&
+                metadata.delay && metadata.delay[0] === 100;
+            if (!results.encoderFunctional) results.encoderError = 'encoded WebP did not retain both timed frames';
+        } catch (e) { results.encoderError = e.message || String(e); }
+    } else results.encoderError = 'sharp is unavailable';
     emitNet('pm-autoshot:client:diagnostics', src, results);
 });
 
