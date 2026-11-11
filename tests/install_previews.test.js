@@ -1,0 +1,33 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+const { install } = require('../tools/install-previews');
+const root = fs.mkdtempSync(path.join(os.tmpdir(), 'pm-autoshot-test-'));
+try {
+  const source = path.join(root, 'pm-autoshot');
+  const target = path.join(root, 'pm-emotes');
+  const shots = path.join(source, 'shots', 'animations');
+  fs.mkdirSync(shots, { recursive: true });
+  fs.mkdirSync(path.join(target, 'client', 'NUI'), { recursive: true });
+  fs.writeFileSync(path.join(target, 'fxmanifest.lua'), 'game "gta5"');
+  fs.writeFileSync(path.join(target, 'client', 'NUI', 'index.html'), '<html></html>');
+  for (const name of ['Emotes_wave.webp', 'Dances_wave.webp', 'not-an-emote.webp']) {
+    fs.writeFileSync(path.join(shots, name), Buffer.alloc(40, 1));
+  }
+  const preview = install(source, target, { dryRun: true });
+  assert.equal(preview.count, 2);
+  assert.equal(fs.existsSync(path.join(target, 'client', 'NUI', 'previews')), false);
+  const result = install(source, target);
+  assert.equal(result.count, 2);
+  assert.deepEqual(result.entries, {
+    'Dances:wave': 'previews/Dances_wave.webp',
+    'Emotes:wave': 'previews/Emotes_wave.webp'
+  });
+  const manifest = JSON.parse(fs.readFileSync(path.join(target, 'client', 'NUI', 'previews', 'manifest.json'), 'utf8'));
+  assert.deepEqual(manifest.entries, result.entries);
+  assert.equal(fs.existsSync(path.join(target, 'client', 'NUI', 'previews', 'not-an-emote.webp')), false);
+  console.log('PM Emotes preview installer fixture passed');
+} finally {
+  fs.rmSync(root, { recursive: true, force: true });
+}
