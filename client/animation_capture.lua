@@ -17,26 +17,33 @@ RegisterNetEvent('pm-autoshot:client:frameSaved', function(id, ok, detail)
     if pending[id] then pending[id] = { done = true, ok = ok, detail = detail } end
 end)
 
-local function captureFrame(name, frameIndex, interval)
+-- Keep screenshot timing independent of server upload acknowledgements.
+local function screenshotFrame()
     local done, image = false, nil
     exports['screenshot-basic']:requestScreenshot({ encoding = 'png' }, function(data)
         image = data
         done = true
     end)
     local deadline = GetGameTimer() + 12000
-    while not done and active and GetGameTimer() < deadline do Wait(25) end
-    if not active or not done or type(image) ~= 'string' or image == '' then return false, 'screenshot timed out' end
+    while not done and active and GetGameTimer() < deadline do Wait(10) end
+    if not active or not done or type(image) ~= 'string' or image == '' then
+        return nil, 'screenshot timed out'
+    end
+    return image
+end
+
+local function uploadFrame(name, frameIndex, interval, image)
     uploadSequence = uploadSequence + 1
     local id = uploadSequence
     pending[id] = { done = false }
     TriggerLatentServerEvent('pm-autoshot:server:animationFrame', 8000000, {
         id = id, name = name, frame = frameIndex, imageData = image, interval = interval,
         chromaKey = Customize.ChromaKeyColor or 'green',
-        transparent = Customize.TransparentBg == true,
-        width = Customize.ScreenshotWidth or 256,
-        height = Customize.ScreenshotHeight or 256
+        transparent = true,
+        width = Customize.ScreenshotWidth or 512,
+        height = Customize.ScreenshotHeight or 512
     })
-    deadline = GetGameTimer() + 20000
+    local deadline = GetGameTimer() + 20000
     while pending[id] and not pending[id].done and active and GetGameTimer() < deadline do Wait(25) end
     local result = pending[id]
     pending[id] = nil
@@ -123,23 +130,46 @@ RegisterCommand('shotanimframes', function(_, args)
         ClearPedTasksImmediately(ped)
         TaskPlayAnim(ped, dict, clip, 8.0, 8.0, -1, 1, 0.0, false, false, false)
         Wait(250)
-        local saved = 0
+        local sampled = {}
         local playbackStart = GetGameTimer()
+        local previousSample = nil
+        local actualIntervals = {}
         for i = 1, count do
             if not active then break end
             local target = playbackStart + (i - 1) * interval
             while active and GetGameTimer() < target do Wait(0) end
             if not active then break end
-            local ok, detail = captureFrame(name, i, interval)
-            if not ok then
-                notice('Frame ' .. i .. ' failed: ' .. tostring(detail))
+            local sampledAt = GetGameTimer()
+            local image, err = screenshotFrame()
+            if not image then
+                notice('Screenshot ' .. i .. ' failed: ' .. tostring(err))
                 break
             end
-            saved = saved + 1
-
+            sampled[i] = image
+            if previousSample then actualIntervals[#actualIntervals + 1] = sampledAt - previousSample end
+            previousSample = sampledAt
         end
+        local saved = 0
+        -- Stop the animation before uploading; uploads can take several seconds.
         ClearPedTasks(ped)
         RemoveAnimDict(dict)
+        if active and #sampled == count then
+            local total = 0
+            for _, elapsed in ipairs(actualIntervals) do total = total + elapsed end
+            local outputInterval = #actualIntervals > 0 and math.max(1, math.floor(total / #actualIntervals + 0.5)) or interval
+            for i = 1, count do
+                if not active then break end
+                local ok, detail = uploadFrame(name, i, outputInterval, sampled[i])
+                sampled[i] = nil
+                if not ok then
+                    notice('Frame upload ' .. i .. ' failed: ' .. tostring(detail))
+                    break
+                end
+                saved = saved + 1
+            end
+            interval = outputInterval
+        end
+        sampled = nil
         if active and saved == count then
             uploadSequence = uploadSequence + 1
             local id = uploadSequence
