@@ -10,7 +10,7 @@ try {
   const shots = path.join(source, 'shots', 'animations');
   fs.mkdirSync(shots, { recursive: true });
   fs.mkdirSync(path.join(target, 'client', 'NUI'), { recursive: true });
-  fs.writeFileSync(path.join(target, 'fxmanifest.lua'), 'game "gta5"');
+  fs.writeFileSync(path.join(target, 'fxmanifest.lua'), "game 'gta5'\nfiles {\n    'client/NUI/index.html',\n}\n");
   fs.writeFileSync(path.join(target, 'client', 'NUI', 'index.html'), '<html></html>');
   for (const name of ['Emotes_wave.webp', 'Dances_wave.webp', 'not-an-emote.webp']) {
     fs.writeFileSync(path.join(shots, name), Buffer.alloc(40, 1));
@@ -26,6 +26,10 @@ try {
   });
   const manifest = JSON.parse(fs.readFileSync(path.join(target, 'client', 'NUI', 'previews', 'manifest.json'), 'utf8'));
   assert.deepEqual(manifest.entries, result.entries);
+  const fx = fs.readFileSync(path.join(target, 'fxmanifest.lua'), 'utf8');
+  assert.match(fx, /'client\\/NUI\\/previews\\/\\*'/);
+  install(source, target);
+  assert.equal(fs.readFileSync(path.join(target, 'fxmanifest.lua'), 'utf8'), fx, 'manifest patch must be idempotent');
   assert.equal(fs.existsSync(path.join(target, 'client', 'NUI', 'previews', 'not-an-emote.webp')), false);
   console.log('PM Emotes preview installer fixture passed');
 } finally {
