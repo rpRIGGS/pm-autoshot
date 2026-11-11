@@ -154,7 +154,8 @@ RegisterCommand('shotanimframes', function(_, args)
             local checkDeadline = GetGameTimer() + 3500
             while active and GetGameTimer() < checkDeadline do
                 local ok, current = pcall(function() return exports['pm-emotes']:IsPlayerInAnim() end)
-                if ok and current and current ~= false then
+                local emoteName = type(current) == 'table' and (current.name or current.emoteName) or current
+                if ok and type(emoteName) == 'string' and emoteName:lower() == clip:lower() then
                     started = true
                     break
                 end
@@ -162,6 +163,7 @@ RegisterCommand('shotanimframes', function(_, args)
             end
             if not started then
                 lastCaptureResult = { ok = false, name = name, reason = 'PM Emotes did not start the requested emote' }
+                pcall(function() exports['pm-emotes']:EmoteCancel() end)
                 TriggerEvent('pm-autoshot:client:closeAnimationStudio')
                 capturing = false; active = false
                 return
