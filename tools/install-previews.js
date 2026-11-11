@@ -5,6 +5,33 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
+function validateAnimatedWebP(file, stat) {
+  const bytes = fs.readFileSync(file);
+  if (bytes.length !== stat.size || bytes.length < 64 ||
+      bytes.toString('ascii', 0, 4) !== 'RIFF' ||
+      bytes.toString('ascii', 8, 12) !== 'WEBP' ||
+      bytes.readUInt32LE(4) + 8 !== bytes.length)
+    return false;
+  let offset = 12, hasAnimation = false, frameCount = 0, hasCanvas = false;
+  while (offset + 8 <= bytes.length) {
+    const type = bytes.toString('ascii', offset, offset + 4);
+    const length = bytes.readUInt32LE(offset + 4);
+    const end = offset + 8 + length + (length & 1);
+    if (end > bytes.length) return false;
+    if (type === 'VP8X') {
+      if (length < 10) return false;
+      hasCanvas = (bytes[offset + 8] & 0x02) !== 0;
+    }
+    if (type === 'ANIM') hasAnimation = length >= 6;
+    if (type === 'ANMF') {
+      if (length < 16) return false;
+      frameCount++;
+    }
+    offset = end;
+  }
+  return offset === bytes.length && hasCanvas && hasAnimation && frameCount >= 2;
+}
+
 function install(source, destination, { dryRun = false } = {}) {
   const from = path.resolve(source, 'shots', 'animations');
   const to = path.resolve(destination, 'client', 'NUI', 'previews');
@@ -34,16 +61,9 @@ function install(source, destination, { dryRun = false } = {}) {
     const file = path.join(from, filename);
     const stat = fs.lstatSync(file);
     if (!stat.isFile() || stat.size < 20 || stat.size > 32 * 1024 * 1024) continue;
-    // Reject corrupt/placeholder captures before exposing them in NUI.
-    const header = Buffer.alloc(12);
-    const fd = fs.openSync(file, 'r');
-    try { fs.readSync(fd, header, 0, header.length, 0); }
-    finally { fs.closeSync(fd); }
-    if (header.toString('ascii', 0, 4) !== 'RIFF' ||
-        header.toString('ascii', 8, 12) !== 'WEBP' ||
-        header.readUInt32LE(4) + 8 !== stat.size) {
+    // Only deploy structurally valid animated WebP captures with 2+ frames.
+    if (!validateAnimatedWebP(file, stat))
       throw new Error('Invalid WebP capture: ' + filename);
-    }
     const match = /^(Emotes|Dances|Exits|PropEmotes)_(.+)\.webp$/.exec(filename);
     const keys = knownKeys.get(filename);
     if (keys && keys.length > 1) throw new Error('Ambiguous preview filename: ' + filename + ' (' + keys.join(', ') + ')');
