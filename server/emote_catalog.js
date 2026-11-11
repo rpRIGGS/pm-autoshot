@@ -4,19 +4,44 @@ const path = require('path');
 
 // Read a balanced Lua table while ignoring braces inside strings and comments.
 function tableEnd(text, open) {
-    let depth = 0, quote = null, comment = false;
+    let depth = 0, quote = null, lineComment = false, longClose = null;
     for (let i = open; i < text.length; i++) {
         const ch = text[i], next = text[i + 1];
-        if (comment) { if (ch === '\n') comment = false; continue; }
+        if (lineComment) { if (ch === '\n') lineComment = false; continue; }
+        if (longClose) {
+            if (text.startsWith(longClose, i)) {
+                i += longClose.length - 1;
+                longClose = null;
+            }
+            continue;
+        }
         if (quote) {
             if (ch === '\\') { i++; continue; }
             if (ch === quote) quote = null;
             continue;
         }
-        if (ch === '-' && next === '-') { comment = true; i++; continue; }
+        if (ch === '-' && next === '-') {
+            const long = /^\[(=*)\[/.exec(text.slice(i + 2, i + 32));
+            if (long) {
+                longClose = ']' + long[1] + ']';
+                i += long[0].length + 1;
+            } else {
+                lineComment = true;
+                i++;
+            }
+            continue;
+        }
         if (ch === '"' || ch === "'") { quote = ch; continue; }
+        if (ch === '[') {
+            const long = /^\[(=*)\[/.exec(text.slice(i, i + 30));
+            if (long) {
+                longClose = ']' + long[1] + ']';
+                i += long[0].length - 1;
+                continue;
+            }
+        }
         if (ch === '{') depth++;
-        if (ch === '}' && --depth === 0) return i;
+        else if (ch === '}' && --depth === 0) return i;
     }
     return -1;
 }
