@@ -81,6 +81,24 @@ function install(source, destination, { dryRun = false } = {}) {
     manifest[key] = 'previews/' + filename;
     plan.push({ file, filename });
   }
+  // Deployments may be intentionally batched. Preserve previously installed
+  // previews unless their assets are missing or the catalog no longer lists
+  // their emote key. Do not discard earlier successful capture batches.
+  const existingManifestPath = path.join(to, 'manifest.json');
+  if (fs.existsSync(existingManifestPath)) {
+    const previous = JSON.parse(fs.readFileSync(existingManifestPath, 'utf8'));
+    if (!previous || previous.version !== 1 || !previous.entries ||
+        typeof previous.entries !== 'object' || Array.isArray(previous.entries))
+      throw new Error('Existing preview manifest has an unsupported format');
+    const catalogIdentities = new Set([].concat(...Array.from(knownKeys.values())));
+    for (const [key, asset] of Object.entries(previous.entries)) {
+      if (Object.hasOwn(manifest, key) || !catalogIdentities.has(key)) continue;
+      if (typeof asset !== 'string' || !/^previews\\/[A-Za-z0-9_-]+\\.webp$/.test(asset))
+        throw new Error('Unsafe existing preview manifest entry: ' + key);
+      if (fs.existsSync(path.join(to, path.basename(asset))))
+        manifest[key] = asset;
+    }
+  }
   const fxPath = path.join(destination, 'fxmanifest.lua');
   const fx = fs.readFileSync(fxPath, 'utf8');
   const needsManifestPatch = !fx.includes("'client/NUI/previews/*'");
