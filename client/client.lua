@@ -2355,6 +2355,12 @@ RegisterNetEvent('pm-autoshot:client:openAnimationStudio', function()
     Wait(500)
     HideHUD(true)
     ped = SetupCapturePed(GetHashKey(GENDER_MODELS[captureGender]))
+    if not ped or not DoesEntityExist(ped) then
+        animationStudioActive = false
+        CleanupCapture()
+        TriggerEvent('pm-autoshot:client:studioResult', false, 'studio ped unavailable')
+        return
+    end
     CreateOrbitCamera(ped, 'torso')
     SetNuiFocus(false, false)
     TriggerEvent('pm-autoshot:client:studioResult', true)
