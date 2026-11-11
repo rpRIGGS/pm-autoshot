@@ -357,6 +357,12 @@ onNet('pm-autoshot:server:animationFrame', (payload) => {
         if (typeof encoded !== 'string' || encoded.length > Math.ceil(MAX_ANIM_FRAME_BYTES * 4 / 3) + 128) throw new Error('frame too large');
         const raw = Buffer.from(stripDataUri(encoded), 'base64');
         if (!raw.length || raw.length > MAX_ANIM_FRAME_BYTES) throw new Error('invalid frame data');
+        // Reject oversized PNG dimensions before pngjs allocates decoded RGBA.
+        if (raw.length < 24 || raw.toString('hex', 0, 8) !== '89504e470d0a1a0a' ||
+            raw.toString('ascii', 12, 16) !== 'IHDR') throw new Error('invalid PNG header');
+        const sourceWidth = raw.readUInt32BE(16), sourceHeight = raw.readUInt32BE(20);
+        if (!sourceWidth || !sourceHeight || sourceWidth > 4096 || sourceHeight > 4096 ||
+            sourceWidth * sourceHeight > 4096 * 4096) throw new Error('frame dimensions too large');
         let png = PNG.sync.read(raw);
         if (png.width > 4096 || png.height > 4096 || png.width * png.height > 4096 * 4096) throw new Error('frame dimensions too large');
         if (payload.transparent === true) removeChromaKey(png, payload.chromaKey === 'magenta' ? 'magenta' : 'green');
