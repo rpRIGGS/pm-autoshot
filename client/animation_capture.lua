@@ -289,7 +289,13 @@ RegisterCommand('shotanimbatch', function(_, args)
             notice(('Batch %d/%d: %s (%s)'):format(i, last, entry.key, entry.category))
             local outputName = (entry.category .. '_' .. entry.key):gsub('[^%w_-]', '_'):sub(1, 96)
             local dict, clip = entry.native and 'native:pm-emotes' or entry.dict, entry.native and entry.key or entry.clip
-            ExecuteCommand(('shotanimframes %s %s %d %d %s'):format(dict, clip, frames, interval, outputName))
+            -- Quote native emote keys that contain spaces; reject quotes and
+            -- control characters rather than sending malformed commands.
+            if clip:find('[%c"]') then
+                notice('Batch skipped unsupported emote key: ' .. entry.key)
+            else
+                ExecuteCommand(('shotanimframes %s "%s" %d %d %s'):format(dict, clip, frames, interval, outputName))
+            end
             local startDeadline = GetGameTimer() + 3000
             while batchActive and not capturing and GetGameTimer() < startDeadline do Wait(50) end
             local endDeadline = GetGameTimer() + 120000
