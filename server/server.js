@@ -276,10 +276,12 @@ onNet('pm-autoshot:server:finishAnimation', async (payload) => {
         const { name, frames } = payload;
         if (typeof name !== 'string' || !/^[a-zA-Z0-9_-]{1,96}$/.test(name)) throw new Error('invalid animation name');
         if (!Number.isInteger(frames) || frames < 2 || frames > 24) throw new Error('invalid frame count');
-        const interval = Math.max(100, Math.min(1000, parseInt(payload.interval, 10) || 200));
+        const interval = Math.max(1, Math.min(10000, parseInt(payload.interval, 10) || 200));
         const key = animationKey(src, name);
         const session = animationSessions.get(key);
         if (!session || session.frames.size !== frames) throw new Error('incomplete capture session');
+        if (session.encoding) throw new Error('animation encoding already in progress');
+        session.encoding = true;
         const buffers = [];
         let width = 0, height = 0;
         for (let i = 1; i <= frames; i++) {
@@ -333,12 +335,19 @@ onNet('pm-autoshot:server:animationFrame', (payload) => {
         png = resizePNG(png, width, height);
         cleanupAnimationSessions();
         const key = animationKey(src, name);
-        if (frame === 1) animationSessions.delete(key);
+        if (frame === 1) {
+            const prior = animationSessions.get(key);
+            if (prior && prior.encoding) throw new Error('prior animation still encoding');
+            animationSessions.delete(key);
+        }
         if (!animationSessions.has(key)) {
             if (frame !== 1) throw new Error('capture session must begin with frame 1');
             if (animationSessions.size >= MAX_ANIMATION_SESSIONS) throw new Error('too many active sessions');
             animationSessions.set(key, { created: Date.now(), frames: new Map() });
         }
+        const session = animationSessions.get(key);
+        if (session.encoding) throw new Error('session is encoding');
+        if (frame !== session.frames.size + 1) throw new Error('out-of-order animation frame');
         const folder = path.join(OUTPUT_DIR, 'animations', String(src), name);
         fs.mkdirSync(folder, { recursive: true });
         const filename = String(frame).padStart(3, '0') + '.png';
