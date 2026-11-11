@@ -93,6 +93,11 @@ function parseCatalog(source) {
                 const [, dict, clip] = values;
                 if (dict.length <= 200 && clip.length <= 200)
                     result.push({ key, category, dict, clip, native: false });
+                else result.push({ key, category, native: true });
+            } else {
+                // The capture pipeline uses PM Emotes native playback, so
+                // unusual definitions need only a valid emote key.
+                result.push({ key, category, native: true });
             }
             cursor = entryEnd + 1;
         }
