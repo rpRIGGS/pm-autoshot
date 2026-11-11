@@ -9,6 +9,7 @@ end)
 local pending = {}
 local uploadSequence = 0
 local finishResults = {}
+local lastCaptureResult = nil
 RegisterNetEvent('pm-autoshot:client:animationFinished', function(id, ok, detail)
     if finishResults[id] then finishResults[id] = { done = true, ok = ok, detail = detail } end
 end)
@@ -108,6 +109,7 @@ RegisterCommand('shotanimframes', function(_, args)
     if name == '' then notice('Invalid animation identifier'); return end
     capturing = true
     active = true
+    lastCaptureResult = nil
     CreateThread(function()
         RequestAnimDict(dict)
         local deadline = GetGameTimer() + 10000
@@ -185,11 +187,14 @@ RegisterCommand('shotanimframes', function(_, args)
             local result = finishResults[id]
             finishResults[id] = nil
             if result and result.done and result.ok then
+                lastCaptureResult = { ok = true, name = name, path = result.detail }
                 notice('Animated WebP saved: ' .. tostring(result.detail))
             else
+                lastCaptureResult = { ok = false, name = name, reason = result and result.detail or 'timeout' }
                 notice('WebP export failed: ' .. tostring(result and result.detail or 'timeout'))
             end
         end
+        if not lastCaptureResult then lastCaptureResult = { ok = false, name = name, reason = 'capture incomplete or cancelled' } end
         TriggerEvent('pm-autoshot:client:closeAnimationStudio')
         capturing = false; active = false
         notice(('Captured %d/%d PNG frames for %s'):format(saved, count, name))
@@ -248,6 +253,10 @@ RegisterCommand('shotanimbatch', function(_, args)
             if capturing then
                 notice('Batch timed out on ' .. entry.key)
                 ExecuteCommand('shotanimstop')
+                break
+            end
+            if not lastCaptureResult or not lastCaptureResult.ok or lastCaptureResult.name ~= entry.key then
+                notice('Batch stopped at ' .. entry.key .. ': ' .. tostring(lastCaptureResult and lastCaptureResult.reason or 'no completion result'))
                 break
             end
             Wait(300)
