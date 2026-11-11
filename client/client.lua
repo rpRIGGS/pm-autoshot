@@ -2506,17 +2506,17 @@ exports('getPhotoURL', function(gender, itemType, id, drawable, texture)
     -- Mirrors the capture filenames: overlays and texture 0 are always saved
     -- as <drawable>.<ext>, only texture > 0 gets a _<texture> suffix.
     if itemType == 'overlay' or not texture or texture == 0 then
-        return ('https://cfx-nui-uz_AutoShot/shots/%s/%s%d/%d.%s'):format(
+        return ('https://cfx-nui-pm-autoshot/shots/%s/%s%d/%d.%s'):format(
             gender, prefix, id, drawable, SavedImageExt()
         )
     end
-    return ('https://cfx-nui-uz_AutoShot/shots/%s/%s%d/%d_%d.%s'):format(
+    return ('https://cfx-nui-pm-autoshot/shots/%s/%s%d/%d_%d.%s'):format(
         gender, prefix, id, drawable, texture, SavedImageExt()
     )
 end)
 
 exports('getShotsBaseURL', function()
-    return 'https://cfx-nui-uz_AutoShot/shots'
+    return 'https://cfx-nui-pm-autoshot/shots'
 end)
 
 exports('getPhotoFormat', function()
@@ -2524,16 +2524,16 @@ exports('getPhotoFormat', function()
 end)
 
 exports('getVehiclePhotoURL', function(modelName)
-    return ('https://cfx-nui-uz_AutoShot/shots/vehicles/%s.%s'):format(modelName, SavedImageExt())
+    return ('https://cfx-nui-pm-autoshot/shots/vehicles/%s.%s'):format(modelName, SavedImageExt())
 end)
 
 exports('getObjectPhotoURL', function(modelName)
-    return ('https://cfx-nui-uz_AutoShot/shots/objects/%s.%s'):format(modelName, SavedImageExt())
+    return ('https://cfx-nui-pm-autoshot/shots/objects/%s.%s'):format(modelName, SavedImageExt())
 end)
 
 -- collection / overlay as in the tattoo list, e.g. 'mpbeach_overlays', 'MP_Bea_M_Back_000'
 exports('getTattooURL', function(gender, collection, overlay)
-    return ('https://cfx-nui-uz_AutoShot/shots/%s.%s'):format(TattooFilename(gender, collection, overlay), SavedImageExt())
+    return ('https://cfx-nui-pm-autoshot/shots/%s.%s'):format(TattooFilename(gender, collection, overlay), SavedImageExt())
 end)
 
 -- ════════════════════════════════════════════════════════
