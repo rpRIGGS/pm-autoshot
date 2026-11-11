@@ -116,3 +116,12 @@ These are implementation checks, **not reasons to replace the agreed approach or
 - PM Emotes `fxmanifest.lua` declares `client/NUI/previews/*` and `development-reference/PM-AUTOSHOT-PREVIEWS.md` documents deployment.
 - PM AutoShot includes `tools/install-previews.js` and an installer regression fixture; deployment is an explicit server-admin action after capture.
 - **Still required:** actual FiveM screenshot/encoder validation, full native PM Emotes playback for prop/scenario/specialized entries, and complete end-to-end verification. The NUI connection exists but is not proof of production readiness.
+
+
+## Native PM Emotes capture implementation (November 11)
+
+- Catalog now includes dictionary entries, prop entries, and scenario entries in `Emotes`, `Dances`, `Exits`, and `PropEmotes`.
+- Prop/scenario entries are marked `native: true` and routed through PM Emotes' own `animations:client:EmoteCommandStart` event rather than recreating prop attachments or scenario logic in PM AutoShot.
+- The existing studio captures native playback, waits for PM Emotes' `IsPlayerInAnim` export to confirm animation started, and invokes `EmoteCancel` when capture completes. Native batch entries have a longer pause to reduce cooldown interference.
+- The preview installer accepts `PropEmotes_*.webp` files. The PM Emotes NUI preview manifest resolves them using existing emote type/key data attributes.
+- **Unverified in FiveM:** PM Emotes permission/state handling, studio compatibility with prop attachment/scenarios, native cancellation and actual WebP quality. Shared and animal emotes are not yet supported; they need a separate compatibility plan rather than blindly treating them as ordinary animations.
