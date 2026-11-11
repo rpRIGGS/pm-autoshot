@@ -262,7 +262,7 @@ function animationKey(src, name) { return String(src) + ':' + name; }
 function cleanupAnimationSessions() {
     const now = Date.now();
     for (const [key, session] of animationSessions) {
-        if (now - session.created > ANIMATION_SESSION_TTL) animationSessions.delete(key);
+        if (!session.encoding && now - session.created > ANIMATION_SESSION_TTL) animationSessions.delete(key);
     }
 }
 onNet('pm-autoshot:server:finishAnimation', async (payload) => {
@@ -306,6 +306,10 @@ onNet('pm-autoshot:server:finishAnimation', async (payload) => {
     } catch (e) {
         detail = e.message || String(e);
         console.log('[PM AutoShot] WebP encode failed: ' + detail);
+        if (payload && typeof payload.name === 'string' && /^[a-zA-Z0-9_-]{1,96}$/.test(payload.name)) {
+            const failed = animationSessions.get(animationKey(src, payload.name));
+            if (failed) failed.encoding = false;
+        }
     }
     if (id !== undefined) emitNet('pm-autoshot:client:animationFinished', src, id, ok, detail);
 });
