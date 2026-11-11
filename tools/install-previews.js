@@ -56,6 +56,8 @@ function install(source, destination, { dryRun = false } = {}) {
     }
   }
   const files = fs.readdirSync(from).filter(name => /^(Emotes|Dances|Exits|PropEmotes)_[A-Za-z0-9_-]+\.webp$/.test(name)).sort();
+  if (files.length === 0)
+    throw new Error('No animated WebP captures found; refusing to replace the existing preview manifest');
   // Resolve and validate the entire plan before changing the destination.
   const plan = [];
   const plannedNames = new Set();
