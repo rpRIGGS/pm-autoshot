@@ -27,7 +27,7 @@ function install(source, destination, { dryRun = false } = {}) {
     fs.mkdirSync(to, { recursive: true });
     fs.writeFileSync(path.join(to, 'manifest.json'), JSON.stringify({ version: 1, entries: manifest }, null, 2) + '\n');
   }
-  return { count: Object.keys(manifest).length, destination: to, dryRun };
+  return { count: Object.keys(manifest).length, destination: to, dryRun, entries: manifest };
 }
 if (require.main === module) {
   const [, , source, destination, option] = process.argv;
