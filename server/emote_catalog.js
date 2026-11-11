@@ -23,7 +23,7 @@ function tableEnd(text, open) {
 
 function parseCatalog(source) {
     const result = [];
-    for (const category of ['Emotes', 'Dances', 'Exits']) {
+    for (const category of ['Emotes', 'Dances', 'Exits', 'PropEmotes']) {
         const declaration = new RegExp('(?:RP|CustomDP)\\.' + category + '\\s*=\\s*\\{');
         const found = declaration.exec(source);
         if (!found) continue;
@@ -39,11 +39,18 @@ function parseCatalog(source) {
             const entryEnd = tableEnd(section, entryOpen);
             if (entryEnd < 0) continue;
             const body = section.slice(entryOpen + 1, entryEnd);
-            // Only the first two string values identify plain dictionary clips.
+            // Keep native PM Emotes playback for props and scenarios rather
+            // than silently omitting them or capturing the wrong plain clip.
             const values = /^\s*["']([^"'\r\n]+)["']\s*,\s*["']([^"'\r\n]+)["']/.exec(body);
-            if (values && !/\b(?:Prop|SecondProp|PtfxAsset|PtfxName)\s*=/.test(body)) {
+            const scenario = /^\s*(?:ScenarioType\.)?[A-Z_]+\s*,/.test(body);
+            const requiresNative = category === 'PropEmotes' ||
+                /\b(?:Prop|SecondProp|PtfxAsset|PtfxName)\s*=/.test(body) || scenario;
+            if (requiresNative) {
+                result.push({ key, category, native: true });
+            } else if (values) {
                 const [, dict, clip] = values;
-                if (dict.length <= 200 && clip.length <= 200) result.push({ key, category, dict, clip });
+                if (dict.length <= 200 && clip.length <= 200)
+                    result.push({ key, category, dict, clip, native: false });
             }
             header.lastIndex = entryEnd + 1;
         }
