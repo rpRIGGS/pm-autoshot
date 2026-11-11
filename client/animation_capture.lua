@@ -102,6 +102,7 @@ end, false)
 RegisterCommand('shotanimframes', function(_, args)
     if active or capturing then notice('Capture already in progress'); return end
     local dict, clip = args[1], args[2]
+    local native = dict == 'native:pm-emotes'
     if not dict or not clip then
         notice('Usage: /shotanimframes <dictionary> <clip> [frames 2-24] [interval-ms 100-1000]')
         return
@@ -114,10 +115,10 @@ RegisterCommand('shotanimframes', function(_, args)
     active = true
     lastCaptureResult = nil
     CreateThread(function()
-        RequestAnimDict(dict)
+        if not native then RequestAnimDict(dict) end
         local deadline = GetGameTimer() + 10000
-        while active and not HasAnimDictLoaded(dict) and GetGameTimer() < deadline do Wait(50) end
-        if not active or not HasAnimDictLoaded(dict) then
+        while not native and active and not HasAnimDictLoaded(dict) and GetGameTimer() < deadline do Wait(50) end
+        if not active or (not native and not HasAnimDictLoaded(dict)) then
             notice('Animation dictionary unavailable or capture cancelled: ' .. dict)
             lastCaptureResult = { ok = false, name = name, reason = 'animation dictionary unavailable or cancelled' }
             capturing = false; active = false; return
@@ -129,13 +130,22 @@ RegisterCommand('shotanimframes', function(_, args)
         if not active or not studioResult or not studioResult.ok then
             notice('Studio unavailable: ' .. tostring(studioResult and studioResult.reason or 'cancelled or timeout'))
             TriggerEvent('pm-autoshot:client:closeAnimationStudio')
-            RemoveAnimDict(dict)
+            if not native then RemoveAnimDict(dict) end
             lastCaptureResult = { ok = false, name = name, reason = 'studio unavailable or cancelled' }
             capturing = false; active = false; return
         end
         local ped = PlayerPedId()
         ClearPedTasksImmediately(ped)
-        TaskPlayAnim(ped, dict, clip, 8.0, 8.0, -1, 1, 0.0, false, false, false)
+        if native then
+            if GetResourceState('pm-emotes') ~= 'started' then
+                lastCaptureResult = { ok = false, name = name, reason = 'PM Emotes is not started' }
+                TriggerEvent('pm-autoshot:client:closeAnimationStudio')
+                capturing = false; active = false; return
+            end
+            TriggerEvent('animations:client:EmoteCommandStart', { clip })
+        else
+            TaskPlayAnim(ped, dict, clip, 8.0, 8.0, -1, 1, 0.0, false, false, false)
+        end
         Wait(250)
         local sampled = {}
         local playbackStart = GetGameTimer()
@@ -163,8 +173,12 @@ RegisterCommand('shotanimframes', function(_, args)
         end
         local saved = 0
         -- Stop the animation before uploading; uploads can take several seconds.
-        ClearPedTasks(ped)
-        RemoveAnimDict(dict)
+        if native then
+            pcall(function() exports['pm-emotes']:EmoteCancel() end)
+        else
+            ClearPedTasks(ped)
+            RemoveAnimDict(dict)
+        end
         if active and #sampled == count then
             local total = 0
             for _, elapsed in ipairs(actualIntervals) do total = total + elapsed end
@@ -252,7 +266,8 @@ RegisterCommand('shotanimbatch', function(_, args)
             local entry = catalog[i]
             notice(('Batch %d/%d: %s (%s)'):format(i, last, entry.key, entry.category))
             local outputName = (entry.category .. '_' .. entry.key):gsub('[^%w_-]', '_'):sub(1, 96)
-            ExecuteCommand(('shotanimframes %s %s %d %d %s'):format(entry.dict, entry.clip, frames, interval, outputName))
+            local dict, clip = entry.native and 'native:pm-emotes' or entry.dict, entry.native and entry.key or entry.clip
+            ExecuteCommand(('shotanimframes %s %s %d %d %s'):format(dict, clip, frames, interval, outputName))
             local startDeadline = GetGameTimer() + 3000
             while batchActive and not capturing and GetGameTimer() < startDeadline do Wait(50) end
             local endDeadline = GetGameTimer() + 120000
