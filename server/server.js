@@ -316,6 +316,9 @@ onNet('pm-autoshot:server:finishAnimation', async (payload) => {
             buffers.push(png.data);
         }
         if (width * height * frames > 1024 * 1024 * 24) throw new Error('animation pixel budget exceeded');
+        // Keep a failed/cancelled capture from consuming a large amount of
+        // memory while the encoder is still working.
+        if (session.cancelled) throw new Error('animation capture cancelled');
         const outputPath = path.join(OUTPUT_DIR, 'animations', name + '.webp');
         const tmpPath = outputPath + '.tmp-' + String(src);
         if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
