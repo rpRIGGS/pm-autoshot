@@ -4,6 +4,10 @@ local active = false
 local capturing = false
 local pending = {}
 local uploadSequence = 0
+local finishResults = {}
+RegisterNetEvent('pm-autoshot:client:animationFinished', function(id, ok, detail)
+    if finishResults[id] then finishResults[id] = { done = true, ok = ok, detail = detail } end
+end)
 
 RegisterNetEvent('pm-autoshot:client:frameSaved', function(id, ok, detail)
     if pending[id] then pending[id] = { done = true, ok = ok, detail = detail } end
@@ -118,6 +122,21 @@ RegisterCommand('shotanimframes', function(_, args)
         end
         ClearPedTasks(ped)
         RemoveAnimDict(dict)
+        if active and saved == count then
+            uploadSequence = uploadSequence + 1
+            local id = uploadSequence
+            finishResults[id] = { done = false }
+            TriggerServerEvent('pm-autoshot:server:finishAnimation', { id = id, name = name, frames = count, interval = interval })
+            local deadline = GetGameTimer() + 45000
+            while active and not finishResults[id].done and GetGameTimer() < deadline do Wait(50) end
+            local result = finishResults[id]
+            finishResults[id] = nil
+            if result and result.done and result.ok then
+                notice('Animated WebP saved: ' .. tostring(result.detail))
+            else
+                notice('WebP export failed: ' .. tostring(result and result.detail or 'timeout'))
+            end
+        end
         capturing = false; active = false
         notice(('Captured %d/%d PNG frames for %s'):format(saved, count, name))
     end)
