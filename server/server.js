@@ -352,6 +352,21 @@ onNet('pm-autoshot:server:animationFrame', (payload) => {
     if (id !== undefined) emitNet('pm-autoshot:client:frameSaved', src, id, ok, detail);
 });
 
+
+// Catalog is always loaded from the live PM Emotes installation, not a frozen list.
+onNet('pm-autoshot:server:requestCatalog', () => {
+    const src = source;
+    if (!checkAce(src)) return;
+    try {
+        const catalog = require('./emote_catalog').readCatalog('pm-emotes');
+        emitNet('pm-autoshot:client:catalog', src, catalog);
+        console.log('[PM AutoShot] PM Emotes dictionary animations indexed: ' + catalog.length);
+    } catch (e) {
+        console.log('[PM AutoShot] Catalog unavailable: ' + e.message);
+        emitNet('pm-autoshot:client:catalog', src, [], e.message);
+    }
+});
+
 const MAX_PAYLOAD_BYTES = 20 * 1024 * 1024;
 
 onNet('uz_autoshot:server:processCapture', (payload) => {
