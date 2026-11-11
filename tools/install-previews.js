@@ -34,6 +34,16 @@ function install(source, destination, { dryRun = false } = {}) {
     const file = path.join(from, filename);
     const stat = fs.lstatSync(file);
     if (!stat.isFile() || stat.size < 20 || stat.size > 32 * 1024 * 1024) continue;
+    // Reject corrupt/placeholder captures before exposing them in NUI.
+    const header = Buffer.alloc(12);
+    const fd = fs.openSync(file, 'r');
+    try { fs.readSync(fd, header, 0, header.length, 0); }
+    finally { fs.closeSync(fd); }
+    if (header.toString('ascii', 0, 4) !== 'RIFF' ||
+        header.toString('ascii', 8, 12) !== 'WEBP' ||
+        header.readUInt32LE(4) + 8 !== stat.size) {
+      throw new Error('Invalid WebP capture: ' + filename);
+    }
     const match = /^(Emotes|Dances|Exits|PropEmotes)_(.+)\.webp$/.exec(filename);
     const keys = knownKeys.get(filename);
     if (keys && keys.length > 1) throw new Error('Ambiguous preview filename: ' + filename + ' (' + keys.join(', ') + ')');
