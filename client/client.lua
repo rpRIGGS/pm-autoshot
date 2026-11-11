@@ -2353,12 +2353,20 @@ RegisterNetEvent('pm-autoshot:client:openAnimationStudio', function()
     isPreview = true
     TriggerServerEvent('uz_autoshot:server:setBucket', Customize.RoutingBucket)
     Wait(500)
+    if not animationStudioActive then
+        CleanupCapture()
+        return
+    end
     HideHUD(true)
     ped = SetupCapturePed(GetHashKey(GENDER_MODELS[captureGender]))
     if not ped or not DoesEntityExist(ped) then
         animationStudioActive = false
         CleanupCapture()
         TriggerEvent('pm-autoshot:client:studioResult', false, 'studio ped unavailable')
+        return
+    end
+    if not animationStudioActive then
+        CleanupCapture()
         return
     end
     CreateOrbitCamera(ped, 'torso')
