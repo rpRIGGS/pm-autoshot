@@ -2370,6 +2370,9 @@ RegisterNetEvent('pm-autoshot:client:openAnimationStudio', function()
         return
     end
     CreateOrbitCamera(ped, 'torso')
+    -- Freeze the player's position, not the animation skeleton. PM Emotes
+    -- needs the ped to run its full task/scenario and attach props normally.
+    FreezeEntityPosition(ped, false)
     SetNuiFocus(false, false)
     TriggerEvent('pm-autoshot:client:studioResult', true)
 end)
