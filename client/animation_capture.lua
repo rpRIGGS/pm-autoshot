@@ -301,7 +301,7 @@ RegisterCommand('shotanimbatch', function(_, args)
                 notice('Batch stopped at ' .. entry.key .. ': ' .. tostring(lastCaptureResult and lastCaptureResult.reason or 'no completion result'))
                 break
             end
-            Wait(300)
+            Wait(entry.native and 2500 or 300)
         end
         batchActive = false
         notice('Batch run ended')
