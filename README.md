@@ -1,3 +1,36 @@
+# PM AutoShot — PowerMoves RP
+
+**An expanded fork of [uz_AutoShot](https://github.com/uz-scripts/uz_AutoShot) for FiveM.** The existing screenshot studio and its clothing, accessories, tattoos, vehicle, object, camera, chroma-key, wardrobe, and batch-capture functionality are retained.
+
+## PowerMoves development objective
+
+Add an **animation/emote capture mode** to the existing AutoShot tool, without replacing or removing its original features. The primary use case is generating accurate, locally stored animated previews for the full **PM Emotes** catalog, including animations not covered by third-party preview libraries.
+
+### Planned additions (not implemented yet)
+
+- Import the real PM Emotes animation definitions, preserving their identifiers and playback settings.
+- Play each supported animation on the studio ped, including applicable props and attachments.
+- Capture timed frame sequences while animations run, using AutoShot's studio and background-removal pipeline.
+- Export transparent animated WebP previews, with predictable filenames mapped to PM Emotes identifiers.
+- Run unattended batches with start/pause/resume/stop, skip completed files, retries, failure reports, and recovery after interruptions.
+- Verify sample previews inside the actual PM Emotes NUI before attempting full-catalog capture.
+
+### Resource boundaries
+
+**PM AutoShot** is a development-side capture tool; **PM Emotes** remains the separate player-facing emote resource. Generated preview files will be copied into PM Emotes and served locally by its NUI. PM AutoShot must not become a runtime dependency for players.
+
+### Development status
+
+The repository currently contains the upstream AutoShot functionality. **Animation capture and animated WebP generation are planned, not yet delivered or verified.** Existing upstream instructions below describe the current behavior; installation names and paths must be checked if the FiveM resource folder is renamed from `uz_AutoShot`.
+
+### Upstream credits and license
+
+Original project: **uz-scripts/uz_AutoShot**, licensed under **Apache License 2.0**. Retain the upstream LICENSE and notices. The upstream README is preserved below for its installation and feature documentation.
+
+---
+
+## Original uz_AutoShot documentation
+
 <div align="center">
 
 # uz_AutoShot
