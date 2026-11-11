@@ -147,6 +147,26 @@ RegisterCommand('shotanimframes', function(_, args)
             TaskPlayAnim(ped, dict, clip, 8.0, 8.0, -1, 1, 0.0, false, false, false)
         end
         Wait(250)
+        if native and active then
+            -- PM Emotes can reject a request (permissions, cooldown, busy
+            -- player). Do not save a stationary idle preview as success.
+            local started = false
+            local checkDeadline = GetGameTimer() + 3500
+            while active and GetGameTimer() < checkDeadline do
+                local ok, current = pcall(function() return exports['pm-emotes']:IsPlayerInAnim() end)
+                if ok and current and current ~= false then
+                    started = true
+                    break
+                end
+                Wait(100)
+            end
+            if not started then
+                lastCaptureResult = { ok = false, name = name, reason = 'PM Emotes did not start the requested emote' }
+                TriggerEvent('pm-autoshot:client:closeAnimationStudio')
+                capturing = false; active = false
+                return
+            end
+        end
         local sampled = {}
         local playbackStart = GetGameTimer()
         local previousSample = nil
