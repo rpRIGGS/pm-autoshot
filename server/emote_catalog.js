@@ -9,9 +9,13 @@ function parseCatalog(source) {
     const categories = ['Emotes', 'Dances', 'Exits'];
     const result = [];
     for (const category of categories) {
-        const start = source.indexOf('RP.' + category + ' = {');
+        const baseStart = source.indexOf('RP.' + category + ' = {');
+        const customStart = source.indexOf('CustomDP.' + category + ' = {');
+        const start = baseStart >= 0 ? baseStart : customStart;
         if (start < 0) continue;
-        const next = source.indexOf('\nRP.', start + 1);
+        const nextBase = source.indexOf('\nRP.', start + 1);
+        const nextCustom = source.indexOf('\nCustomDP.', start + 1);
+        const next = nextBase < 0 ? nextCustom : nextCustom < 0 ? nextBase : Math.min(nextBase, nextCustom);
         const section = source.slice(start, next < 0 ? source.length : next);
         // Match entry headers and inspect only the first two values.
         const header = /\["([^"]+)"\]\s*=\s*\{/g;
