@@ -53,3 +53,26 @@ preview. Expand batches only after that smoke test succeeds.
 
 Deployment is an explicit administrator operation, not a live server write
 into the PM Emotes resource.
+
+## Permissions and first live verification
+
+Animation capture, catalog retrieval and diagnostics now require the **existing**
+`qbcore.admin` or `qbcore.god` ACE, or the configured legacy
+`command.<uz_autoshot_command>` ACE. No new ACE grant is needed for QBCore
+admins. The legacy clothing thumbnail tool retains its own configured policy.
+
+On a development server, start `screenshot-basic`, `pm-emotes` and
+`pm-autoshot` (with its Node dependencies installed). As an admin:
+
+1. Run `/shotanimdoctor`. Check that sharp, pngjs, screenshot-basic,
+   pm-emotes, output write access and **encoder-test** all show OK.
+2. Run `/shotanimcatalog` and verify a nonzero catalog count.
+3. Run `/shotanimbatch 1 1 8 200` and confirm a finished animated WebP
+   appears in `pm-autoshot/shots/animations/`. Use `/shotanimbatchstop`
+   to abort if the studio fails to restore the player.
+4. Stop both resources, run `node tools/install-previews.js
+   <path-to-pm-autoshot> <path-to-pm-emotes> --dry-run`, then run without
+   `--dry-run`. Restart the resources and inspect the emote's preview in NUI.
+
+The encoder self-test is not proof of a successful in-game screenshot or NUI
+render. Those steps require a running FiveM client and server.
