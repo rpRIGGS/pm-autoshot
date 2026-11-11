@@ -4,11 +4,23 @@ const os = require('node:os');
 const path = require('node:path');
 const { install } = require('../tools/install-previews');
 function fakeWebP() {
-  const b = Buffer.alloc(40);
-  b.write('RIFF', 0);
-  b.writeUInt32LE(b.length - 8, 4);
-  b.write('WEBP', 8);
-  return b;
+  const chunk = (name, payload) => {
+    const header = Buffer.alloc(8);
+    header.write(name, 0);
+    header.writeUInt32LE(payload.length, 4);
+    return Buffer.concat([header, payload, payload.length % 2 ? Buffer.alloc(1) : Buffer.alloc(0)]);
+  };
+  const vp8x = Buffer.alloc(10);
+  vp8x[0] = 0x12;
+  const anim = Buffer.alloc(6);
+  const frame = Buffer.alloc(16);
+  const parts = [chunk('VP8X', vp8x), chunk('ANIM', anim), chunk('ANMF', frame), chunk('ANMF', frame)];
+  const body = Buffer.concat(parts);
+  const header = Buffer.alloc(12);
+  header.write('RIFF', 0);
+  header.writeUInt32LE(body.length + 4, 4);
+  header.write('WEBP', 8);
+  return Buffer.concat([header, body]);
 }
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'pm-autoshot-test-'));
 try {
