@@ -36,6 +36,7 @@ async function encodeAnimation(sharp, rgbaFrames, width, height, delayMs) {
     uint24(width - 1).copy(vp8x, 4);
     uint24(height - 1).copy(vp8x, 7);
     const anim = Buffer.alloc(6); // transparent background, infinite loop
+    if (!Number.isInteger(delayMs) || delayMs < 1 || delayMs > 0xffffff) throw new Error('invalid frame delay');
     const parts = [chunk('VP8X', vp8x), chunk('ANIM', anim)];
     for (const rgba of rgbaFrames) {
         if (rgba.length !== width * height * 4) throw new Error('incorrect RGBA frame length');
