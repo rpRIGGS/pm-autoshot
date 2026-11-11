@@ -14,9 +14,11 @@ RP.Exits = {
 }
 `;
 const parsed = parseCatalog(sample);
-assert.deepEqual(parsed.map(x => x.key), ['wave', 'dance1', 'exit1']);
-assert.equal(parsed[0].dict, 'friends@frj@ig_1');
-assert.equal(parsed[1].clip, 'clip');
+assert.deepEqual(parsed.map(x => x.key), ['atm', 'wave', 'prop', 'dance1', 'exit1']);
+assert.equal(parsed[0].native, true);
+assert.equal(parsed[2].native, true);
+assert.equal(parsed[1].dict, 'friends@frj@ig_1');
+assert.equal(parsed[3].clip, 'clip');
 const custom = parseCatalog('CustomDP.Emotes = {\n    ["custom"] = { "custom@dict", "idle", "Custom" },\n}\nCustomDP.Dances = {}');
 assert.equal(custom.length, 1);
 assert.equal(custom[0].key, 'custom');
@@ -35,7 +37,8 @@ RP.Emotes = {
 }
 RP.Dances = {\n  ["dance"] = { "dict@dance", "loop", "Dance" }\n}
 `);
-assert.deepEqual(nested.map(x => x.key), ['nested', 'after', 'dance']);
+assert.deepEqual(nested.map(x => x.key), ['nested', 'withprop', 'after', 'dance']);
+assert.equal(nested[1].native, true);
 const comments = parseCatalog(`
 RP.Emotes = {
   -- braces in comments } { should not terminate the section
@@ -43,3 +46,11 @@ RP.Emotes = {
 }
 `);
 assert.equal(comments.length, 1);
+
+const props = parseCatalog(`
+RP.PropEmotes = {
+    ["coffee"] = { "amb@world_human_drinking", "idle", "Coffee", AnimationOptions = { Prop = "prop_coffee" } },
+}
+`);
+assert.equal(props.length, 1);
+assert.deepEqual({key:props[0].key, native:props[0].native, category:props[0].category}, {key:'coffee', native:true, category:'PropEmotes'});
