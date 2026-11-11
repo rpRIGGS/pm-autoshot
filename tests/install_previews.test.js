@@ -15,14 +15,27 @@ try {
   for (const name of ['Emotes_wave.webp', 'Dances_wave.webp', 'not-an-emote.webp']) {
     fs.writeFileSync(path.join(shots, name), Buffer.alloc(40, 1));
   }
+  fs.writeFileSync(path.join(target, 'client', 'AnimationList.lua'), `
+RP.Emotes = {
+    ["wave"] = { "dict@wave", "clip", "Wave" },
+    ["wave hello"] = { "dict@hello", "clip", "Wave hello" },
+}
+RP.PropEmotes = {
+    ["coffee"] = { "dict@coffee", "clip", "Coffee", AnimationOptions = { Prop = "prop_coffee" } },
+}
+`);
+  fs.writeFileSync(path.join(shots, 'Emotes_wave_hello.webp'), Buffer.alloc(40, 1));
+  fs.writeFileSync(path.join(shots, 'PropEmotes_coffee.webp'), Buffer.alloc(40, 1));
   const preview = install(source, target, { dryRun: true });
-  assert.equal(preview.count, 2);
+  assert.equal(preview.count, 4);
   assert.equal(fs.existsSync(path.join(target, 'client', 'NUI', 'previews')), false);
   const result = install(source, target);
-  assert.equal(result.count, 2);
+  assert.equal(result.count, 4);
   assert.deepEqual(result.entries, {
     'Dances:wave': 'previews/Dances_wave.webp',
-    'Emotes:wave': 'previews/Emotes_wave.webp'
+    'Emotes:wave': 'previews/Emotes_wave.webp',
+    'Emotes:wave hello': 'previews/Emotes_wave_hello.webp',
+    'PropEmotes:coffee': 'previews/PropEmotes_coffee.webp'
   });
   const manifest = JSON.parse(fs.readFileSync(path.join(target, 'client', 'NUI', 'previews', 'manifest.json'), 'utf8'));
   assert.deepEqual(manifest.entries, result.entries);
