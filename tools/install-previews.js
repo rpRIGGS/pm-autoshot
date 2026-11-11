@@ -28,30 +28,29 @@ function install(source, destination, { dryRun = false } = {}) {
     }
   }
   const files = fs.readdirSync(from).filter(name => /^(Emotes|Dances|Exits|PropEmotes)_[A-Za-z0-9_-]+\.webp$/.test(name)).sort();
+  // Resolve and validate the entire plan before changing the destination.
+  const plan = [];
   for (const filename of files) {
-    const stat = fs.statSync(path.join(from, filename));
+    const file = path.join(from, filename);
+    const stat = fs.lstatSync(file);
     if (!stat.isFile() || stat.size < 20 || stat.size > 32 * 1024 * 1024) continue;
     const match = /^(Emotes|Dances|Exits|PropEmotes)_(.+)\.webp$/.exec(filename);
     const keys = knownKeys.get(filename);
-    // Ambiguous sanitized names must not silently bind the wrong animation.
     if (keys && keys.length > 1) throw new Error('Ambiguous preview filename: ' + filename + ' (' + keys.join(', ') + ')');
     const key = keys ? keys[0] : match[1] + ':' + match[2];
     manifest[key] = 'previews/' + filename;
-    if (!dryRun) {
-      fs.mkdirSync(to, { recursive: true });
-      fs.copyFileSync(path.join(from, filename), path.join(to, filename));
-    }
+    plan.push({ file, filename });
   }
-
+  const fxPath = path.join(destination, 'fxmanifest.lua');
+  const fx = fs.readFileSync(fxPath, 'utf8');
+  const needsManifestPatch = !fx.includes("'client/NUI/previews/*'");
+  const filesBlock = /files\s*\{([\s\S]*?)\}/m;
+  if (needsManifestPatch && !filesBlock.test(fx)) throw new Error('PM Emotes manifest has no files block');
   if (!dryRun) {
     fs.mkdirSync(to, { recursive: true });
+    for (const item of plan) fs.copyFileSync(item.file, path.join(to, item.filename));
     fs.writeFileSync(path.join(to, 'manifest.json'), JSON.stringify({ version: 1, entries: manifest }, null, 2) + '\n');
-    // NUI files must be declared in the target resource manifest to load.
-    const fxPath = path.join(destination, 'fxmanifest.lua');
-    const fx = fs.readFileSync(fxPath, 'utf8');
-    if (!fx.includes("'client/NUI/previews/*'")) {
-      const filesBlock = /files\s*\{([\s\S]*?)\}/m;
-      if (!filesBlock.test(fx)) throw new Error('PM Emotes manifest has no files block');
+    if (needsManifestPatch) {
       const updated = fx.replace(filesBlock, (block, body) =>
         block.replace(body, body + "\n    'client/NUI/previews/*',"));
       fs.writeFileSync(fxPath, updated);
