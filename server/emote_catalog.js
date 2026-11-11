@@ -25,6 +25,8 @@ function parseCatalog(source) {
             const begin = matches[i].index + matches[i][0].length;
             const end = i + 1 < matches.length ? matches[i + 1].index : section.length;
             const body = section.slice(begin, Math.min(end, begin + 3000));
+            // A nested options/props table cannot be mistaken for a top-level entry.
+            if (key === 'AnimationOptions' || key === 'Prop' || key === 'Ptfx') continue;
             const values = body.match(/^\s*["']([^"'\r\n]+)["']\s*,\s*["']([^"'\r\n]+)["']/);
             if (!values) continue;
             const dict = values[1], clip = values[2];
