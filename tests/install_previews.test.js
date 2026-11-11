@@ -54,6 +54,10 @@ RP.Exits = {
 `);
   fs.writeFileSync(path.join(shots, 'Exits_say_hello.webp'), Buffer.alloc(40, 1));
   assert.throws(() => install(source, target, { dryRun: true }), /Ambiguous preview filename/);
+  const previousManifest = fs.readFileSync(path.join(target, 'client', 'NUI', 'previews', 'manifest.json'), 'utf8');
+  assert.throws(() => install(source, target), /Ambiguous preview filename/);
+  assert.equal(fs.readFileSync(path.join(target, 'client', 'NUI', 'previews', 'manifest.json'), 'utf8'), previousManifest);
+  assert.equal(fs.existsSync(path.join(target, 'client', 'NUI', 'previews', 'Exits_say_hello.webp')), false);
 
   console.log('PM Emotes preview installer fixture passed');
 } finally {
