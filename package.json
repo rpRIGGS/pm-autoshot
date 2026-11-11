@@ -4,7 +4,9 @@
   "description": "Clothing Thumbnail Generator & Browser for FiveM",
   "main": "server/server.js",
   "scripts": {
-    "test:webp": "node tests/animated_webp.test.js"
+    "test:webp": "node tests/animated_webp.test.js",
+    "test:catalog": "node tests/emote_catalog.test.js",
+    "test": "npm run test:catalog && npm run test:webp"
   },
   "dependencies": {
     "pngjs": "^7.0.0",
