@@ -248,6 +248,43 @@ function resizePNG(src, targetW, targetH) {
     return dst;
 }
 
+
+const MAX_ANIM_FRAME_BYTES = 12 * 1024 * 1024;
+onNet('pm-autoshot:server:animationFrame', (payload) => {
+    const src = source;
+    const id = payload && payload.id;
+    let ok = false, detail = 'invalid frame';
+    try {
+        if (!checkAce(src)) throw new Error('permission denied');
+        if (!PNG) throw new Error('pngjs unavailable');
+        if (!payload || typeof payload !== 'object') throw new Error('invalid payload');
+        const name = payload.name;
+        const frame = payload.frame;
+        if (typeof name !== 'string' || !/^[a-zA-Z0-9_-]{1,96}$/.test(name)) throw new Error('invalid animation name');
+        if (!Number.isInteger(frame) || frame < 1 || frame > 24) throw new Error('invalid frame index');
+        const encoded = payload.imageData;
+        if (typeof encoded !== 'string' || encoded.length > Math.ceil(MAX_ANIM_FRAME_BYTES * 4 / 3) + 128) throw new Error('frame too large');
+        const raw = Buffer.from(stripDataUri(encoded), 'base64');
+        if (!raw.length || raw.length > MAX_ANIM_FRAME_BYTES) throw new Error('invalid frame data');
+        let png = PNG.sync.read(raw);
+        if (png.width > 4096 || png.height > 4096) throw new Error('frame dimensions too large');
+        if (payload.transparent === true) removeChromaKey(png, payload.chromaKey === 'magenta' ? 'magenta' : 'green');
+        const width = Math.max(32, Math.min(1024, parseInt(payload.width, 10) || 256));
+        const height = Math.max(32, Math.min(1024, parseInt(payload.height, 10) || 256));
+        png = resizePNG(png, width, height);
+        const folder = path.join(OUTPUT_DIR, 'animations', name);
+        fs.mkdirSync(folder, { recursive: true });
+        const filename = String(frame).padStart(3, '0') + '.png';
+        fs.writeFileSync(path.join(folder, filename), PNG.sync.write(png, { colorType: 6 }));
+        ok = true;
+        detail = 'animations/' + name + '/' + filename;
+    } catch (e) {
+        detail = e.message || String(e);
+        console.log('[PM AutoShot] Animation frame rejected: ' + detail);
+    }
+    if (id !== undefined) emitNet('pm-autoshot:client:frameSaved', src, id, ok, detail);
+});
+
 const MAX_PAYLOAD_BYTES = 20 * 1024 * 1024;
 
 onNet('uz_autoshot:server:processCapture', (payload) => {
