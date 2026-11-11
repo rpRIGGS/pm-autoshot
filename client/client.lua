@@ -2333,6 +2333,40 @@ RegisterNUICallback('recaptureItems', function(data, cb)
     CreateThread(function() RecaptureSpecificItems(items) end)
 end)
 
+
+-- Dedicated animation studio lifecycle. Reuses the original AutoShot ped,
+-- routing bucket, chroma backdrop and orbit camera without altering clothing flows.
+local animationStudioActive = false
+RegisterNetEvent('pm-autoshot:client:openAnimationStudio', function()
+    if animationStudioActive or isCapturing or isPreview or isBrowsing then
+        TriggerEvent('pm-autoshot:client:studioResult', false, 'AutoShot studio is busy')
+        return
+    end
+    if not ServerReady() then
+        TriggerEvent('pm-autoshot:client:studioResult', false, 'AutoShot server unavailable')
+        return
+    end
+    animationStudioActive = true
+    local ped = PlayerPedId()
+    captureGender = GetPedGender(ped)
+    SaveFullAppearance(ped)
+    isPreview = true
+    TriggerServerEvent('uz_autoshot:server:setBucket', Customize.RoutingBucket)
+    Wait(500)
+    HideHUD(true)
+    ped = SetupCapturePed(GetHashKey(GENDER_MODELS[captureGender]))
+    CreateOrbitCamera(ped, 'torso')
+    SetNuiFocus(false, false)
+    TriggerEvent('pm-autoshot:client:studioResult', true)
+end)
+
+RegisterNetEvent('pm-autoshot:client:closeAnimationStudio', function()
+    if not animationStudioActive then return end
+    animationStudioActive = false
+    DestroyOrbitCamera()
+    CleanupCapture()
+end)
+
 -- ════════════════════════════════════════════════════════
 -- COMMANDS
 -- ════════════════════════════════════════════════════════
