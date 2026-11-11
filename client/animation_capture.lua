@@ -71,6 +71,20 @@ RegisterCommand('shotanimdoctor', function()
     TriggerServerEvent('pm-autoshot:server:diagnoseAnimation')
 end, false)
 
+-- Resource restarts must not strand the player in the hidden studio,
+-- retain a native emote, or leave a server-side frame session behind.
+AddEventHandler('onClientResourceStop', function(resource)
+    if resource ~= GetCurrentResourceName() then return end
+    active = false
+    if activeNative and GetResourceState('pm-emotes') == 'started' then
+        pcall(function() exports['pm-emotes']:EmoteCancel() end)
+    end
+    activeNative = false
+    if capturing then
+        TriggerEvent('pm-autoshot:client:closeAnimationStudio')
+    end
+end)
+
 RegisterCommand('shotanimstop', function()
     active = false
     if capturing and lastCaptureResult == nil then
