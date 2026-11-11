@@ -157,3 +157,64 @@ RegisterCommand('shotanimframes', function(_, args)
         notice(('Captured %d/%d PNG frames for %s'):format(saved, count, name))
     end)
 end, false)
+
+-- Catalog is fetched from the installed PM Emotes resource via the server.
+local catalog = nil
+local catalogError = nil
+RegisterNetEvent('pm-autoshot:client:catalog', function(entries, err)
+    catalog = type(entries) == 'table' and entries or {}
+    catalogError = err
+    notice(('PM Emotes catalog: %d dictionary animations%s'):format(#catalog, err and (' (' .. err .. ')') or ''))
+end)
+
+RegisterCommand('shotanimcatalog', function()
+    catalog = nil
+    catalogError = nil
+    TriggerServerEvent('pm-autoshot:server:requestCatalog')
+end, false)
+
+local batchActive = false
+RegisterCommand('shotanimbatchstop', function()
+    batchActive = false
+    ExecuteCommand('shotanimstop')
+end, false)
+
+RegisterCommand('shotanimbatch', function(_, args)
+    if batchActive or capturing or active then notice('Capture is busy'); return end
+    local first = math.max(1, math.floor(tonumber(args[1]) or 1))
+    local count = math.max(1, math.min(25, math.floor(tonumber(args[2]) or 5)))
+    local frames = math.max(2, math.min(24, math.floor(tonumber(args[3]) or 8)))
+    local interval = math.max(100, math.min(1000, math.floor(tonumber(args[4]) or 200)))
+    batchActive = true
+    CreateThread(function()
+        catalog = nil
+        catalogError = nil
+        TriggerServerEvent('pm-autoshot:server:requestCatalog')
+        local deadline = GetGameTimer() + 10000
+        while batchActive and catalog == nil and GetGameTimer() < deadline do Wait(100) end
+        if not batchActive or not catalog or #catalog == 0 then
+            notice('Batch unavailable: ' .. tostring(catalogError or 'catalog timeout or empty'))
+            batchActive = false
+            return
+        end
+        local last = math.min(#catalog, first + count - 1)
+        for i = first, last do
+            if not batchActive then break end
+            local entry = catalog[i]
+            notice(('Batch %d/%d: %s (%s)'):format(i, last, entry.key, entry.category))
+            ExecuteCommand(('shotanimframes %s %s %d %d'):format(entry.dict, entry.clip, frames, interval))
+            local startDeadline = GetGameTimer() + 3000
+            while batchActive and not capturing and GetGameTimer() < startDeadline do Wait(50) end
+            local endDeadline = GetGameTimer() + 120000
+            while batchActive and capturing and GetGameTimer() < endDeadline do Wait(100) end
+            if capturing then
+                notice('Batch timed out on ' .. entry.key)
+                ExecuteCommand('shotanimstop')
+                break
+            end
+            Wait(300)
+        end
+        batchActive = false
+        notice('Batch run ended')
+    end)
+end, false)
