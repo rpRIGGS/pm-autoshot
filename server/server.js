@@ -291,12 +291,9 @@ onNet('pm-autoshot:server:finishAnimation', async (payload) => {
             buffers.push(png.data);
         }
         if (width * height * frames > 1024 * 1024 * 24) throw new Error('animation pixel budget exceeded');
-        const stacked = Buffer.concat(buffers);
         const outputPath = path.join(OUTPUT_DIR, 'animations', name + '.webp');
-        await sharp(stacked, {
-            raw: { width, height: height * frames, channels: 4 },
-            pages: frames, pageHeight: height
-        }).webp({ loop: 0, delay: Array(frames).fill(interval), effort: 4 }).toFile(outputPath);
+        const encoded = await require('./animated_webp').encodeAnimation(sharp, buffers, width, height, interval);
+        fs.writeFileSync(outputPath, encoded);
         animationSessions.delete(key);
         ok = true;
         detail = 'animations/' + name + '.webp';
