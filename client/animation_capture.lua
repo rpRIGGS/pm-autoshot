@@ -1,5 +1,5 @@
--- PM AutoShot animation capture prototype. Standalone test command.
--- The production batch pipeline will reuse the existing AutoShot studio camera.
+-- PM AutoShot animation capture: screenshot studio, native PM Emotes playback,
+-- frame upload, animated WebP export and catalog-driven batches.
 local active = false
 local capturing = false
 local studioResult = nil
@@ -103,8 +103,8 @@ RegisterCommand('shotanim', function(_, args)
     end)
 end, false)
 
--- First capture pipeline: playback + timed PNG frame uploads.
--- Frames are written into shots/animations/<name>/ as an intermediate sequence.
+-- Playback + timed PNG frame uploads. Temporary frames are staged on the
+-- server and removed after successful WebP export or an aborted capture.
 local function captureAnimationFrames(args)
     if active or capturing then notice('Capture already in progress'); return end
     local dict, clip = args[1], args[2]
@@ -268,7 +268,7 @@ local catalogError = nil
 RegisterNetEvent('pm-autoshot:client:catalog', function(entries, err)
     catalog = type(entries) == 'table' and entries or {}
     catalogError = err
-    notice(('PM Emotes catalog: %d dictionary animations%s'):format(#catalog, err and (' (' .. err .. ')') or ''))
+    notice(('PM Emotes catalog: %d capture candidates%s'):format(#catalog, err and (' (' .. err .. ')') or ''))
 end)
 
 RegisterCommand('shotanimcatalog', function()
