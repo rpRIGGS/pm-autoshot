@@ -5,11 +5,7 @@
 const fs = require('fs');
 const path = require('path');
 
-function readCatalog(resourceName = 'pm-emotes') {
-    const root = GetResourcePath(resourceName);
-    if (!root) throw new Error('PM Emotes resource is not installed: ' + resourceName);
-    const file = path.join(root, 'client', 'AnimationList.lua');
-    const source = fs.readFileSync(file, 'utf8');
+function parseCatalog(source) {
     const categories = ['Emotes', 'Dances', 'Exits'];
     const result = [];
     for (const category of categories) {
@@ -35,4 +31,23 @@ function readCatalog(resourceName = 'pm-emotes') {
     return result;
 }
 
-module.exports = { readCatalog };
+function readCatalog(resourceName = 'pm-emotes') {
+    const root = GetResourcePath(resourceName);
+    if (!root) throw new Error('PM Emotes resource is not installed: ' + resourceName);
+    const files = ['client/AnimationList.lua', 'client/AnimationListCustom.lua'];
+    const seen = new Set();
+    const combined = [];
+    for (const relative of files) {
+        const file = path.join(root, relative);
+        if (!fs.existsSync(file)) continue;
+        for (const item of parseCatalog(fs.readFileSync(file, 'utf8'))) {
+            const id = item.category + ':' + item.key;
+            if (seen.has(id)) continue;
+            seen.add(id);
+            combined.push(item);
+        }
+    }
+    return combined;
+}
+
+module.exports = { parseCatalog, readCatalog };
