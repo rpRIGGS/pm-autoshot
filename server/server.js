@@ -333,7 +333,9 @@ onNet('pm-autoshot:server:animationFrame', (payload) => {
         png = resizePNG(png, width, height);
         cleanupAnimationSessions();
         const key = animationKey(src, name);
+        if (frame === 1) animationSessions.delete(key);
         if (!animationSessions.has(key)) {
+            if (frame !== 1) throw new Error('capture session must begin with frame 1');
             if (animationSessions.size >= MAX_ANIMATION_SESSIONS) throw new Error('too many active sessions');
             animationSessions.set(key, { created: Date.now(), frames: new Map() });
         }
