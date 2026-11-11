@@ -33,7 +33,7 @@ RP.Emotes = {
   }},
   ["after"] = { "dict@after", "idle", "After" },
 }
-RP.Dances = { ["dance"] = { "dict@dance", "loop", "Dance" } }
+RP.Dances = {\n  ["dance"] = { "dict@dance", "loop", "Dance" }\n}
 `);
 assert.deepEqual(nested.map(x => x.key), ['nested', 'after', 'dance']);
 const comments = parseCatalog(`
