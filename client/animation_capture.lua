@@ -328,7 +328,7 @@ RegisterCommand('shotanimbatch', function(_, args)
             -- whitespace and cannot safely preserve all catalog emote IDs.
             captureAnimationFrames({ dict, clip, tostring(frames), tostring(interval), outputName })
             local startDeadline = GetGameTimer() + 3000
-            while batchActive and not capturing and GetGameTimer() < startDeadline do Wait(50) end
+            while batchActive and not capturing and lastCaptureResult == nil and GetGameTimer() < startDeadline do Wait(50) end
             local endDeadline = GetGameTimer() + 120000
             while batchActive and capturing and GetGameTimer() < endDeadline do Wait(100) end
             if capturing then
