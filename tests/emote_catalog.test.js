@@ -74,3 +74,12 @@ RP.Emotes = {
 }
 `);
 assert.deepEqual(longLua.map(item => item.key), ['one', 'two']);
+
+const misleading = parseCatalog(`
+RP.Emotes = {
+    -- ["fake"] = { "fake@dict", "fake_clip", "Not an emote" },
+    --[[ ["alsofake"] = { "fake@dict", "fake_clip", "Not an emote" } ]]
+    ["real"] = { "real@dict", "real_clip", "Actual emote" },
+}
+`);
+assert.deepEqual(misleading.map(item => item.key), ['real']);
