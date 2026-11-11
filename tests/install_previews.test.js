@@ -3,6 +3,13 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { install } = require('../tools/install-previews');
+function fakeWebP() {
+  const b = Buffer.alloc(40);
+  b.write('RIFF', 0);
+  b.writeUInt32LE(b.length - 8, 4);
+  b.write('WEBP', 8);
+  return b;
+}
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'pm-autoshot-test-'));
 try {
   const source = path.join(root, 'pm-autoshot');
@@ -13,7 +20,7 @@ try {
   fs.writeFileSync(path.join(target, 'fxmanifest.lua'), "game 'gta5'\nfiles {\n    'client/NUI/index.html',\n}\n");
   fs.writeFileSync(path.join(target, 'client', 'NUI', 'index.html'), '<html></html>');
   for (const name of ['Emotes_wave.webp', 'Dances_wave.webp', 'not-an-emote.webp']) {
-    fs.writeFileSync(path.join(shots, name), Buffer.alloc(40, 1));
+    fs.writeFileSync(path.join(shots, name), fakeWebP());
   }
   fs.writeFileSync(path.join(target, 'client', 'AnimationList.lua'), `
 RP.Emotes = {
@@ -24,8 +31,8 @@ RP.PropEmotes = {
     ["coffee"] = { "dict@coffee", "clip", "Coffee", AnimationOptions = { Prop = "prop_coffee" } },
 }
 `);
-  fs.writeFileSync(path.join(shots, 'Emotes_wave_hello.webp'), Buffer.alloc(40, 1));
-  fs.writeFileSync(path.join(shots, 'PropEmotes_coffee.webp'), Buffer.alloc(40, 1));
+  fs.writeFileSync(path.join(shots, 'Emotes_wave_hello.webp'), fakeWebP());
+  fs.writeFileSync(path.join(shots, 'PropEmotes_coffee.webp'), fakeWebP());
   const preview = install(source, target, { dryRun: true });
   assert.equal(preview.count, 4);
   assert.equal(fs.existsSync(path.join(target, 'client', 'NUI', 'previews')), false);
@@ -52,12 +59,16 @@ RP.Exits = {
     ["say?hello"] = { "dict@two", "clip", "Two" },
 }
 `);
-  fs.writeFileSync(path.join(shots, 'Exits_say_hello.webp'), Buffer.alloc(40, 1));
+  fs.writeFileSync(path.join(shots, 'Exits_say_hello.webp'), fakeWebP());
   assert.throws(() => install(source, target, { dryRun: true }), /Ambiguous preview filename/);
   const previousManifest = fs.readFileSync(path.join(target, 'client', 'NUI', 'previews', 'manifest.json'), 'utf8');
   assert.throws(() => install(source, target), /Ambiguous preview filename/);
   assert.equal(fs.readFileSync(path.join(target, 'client', 'NUI', 'previews', 'manifest.json'), 'utf8'), previousManifest);
   assert.equal(fs.existsSync(path.join(target, 'client', 'NUI', 'previews', 'Exits_say_hello.webp')), false);
+  fs.unlinkSync(path.join(shots, 'Exits_say_hello.webp'));
+  fs.writeFileSync(path.join(shots, 'Emotes_corrupt.webp'), Buffer.alloc(40, 1));
+  assert.throws(() => install(source, target, { dryRun: true }), /Invalid WebP capture/);
+
 
   console.log('PM Emotes preview installer fixture passed');
 } finally {
