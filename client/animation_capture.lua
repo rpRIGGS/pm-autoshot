@@ -73,6 +73,9 @@ end, false)
 
 RegisterCommand('shotanimstop', function()
     active = false
+    if capturing and lastCaptureResult == nil then
+        lastCaptureResult = { ok = false, reason = 'capture cancelled by user' }
+    end
     if activeNative and GetResourceState('pm-emotes') == 'started' then
         pcall(function() exports['pm-emotes']:EmoteCancel() end)
     else
