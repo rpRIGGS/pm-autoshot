@@ -95,6 +95,12 @@ RP.Exits = {
   assert.throws(() => install(source, target, { dryRun: true }), /does not match installed PM Emotes catalog/);
   fs.unlinkSync(path.join(shots, 'Emotes_orphan.webp'));
 
+  for (const filename of fs.readdirSync(shots)) fs.unlinkSync(path.join(shots, filename));
+  const retainedManifest = fs.readFileSync(path.join(target, 'client', 'NUI', 'previews', 'manifest.json'), 'utf8');
+  assert.throws(() => install(source, target, { dryRun: true }), /No animated WebP captures/);
+  assert.throws(() => install(source, target), /No animated WebP captures/);
+  assert.equal(fs.readFileSync(path.join(target, 'client', 'NUI', 'previews', 'manifest.json'), 'utf8'), retainedManifest);
+
   console.log('PM Emotes preview installer fixture passed');
 } finally {
   fs.rmSync(root, { recursive: true, force: true });
