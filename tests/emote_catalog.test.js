@@ -64,3 +64,13 @@ RP.Emotes = {
 }
 `);
 assert.deepEqual(repeated.map(item => item.key), ['one', 'two']);
+
+const longLua = parseCatalog(`
+RP.Emotes = {
+    --[[ block comment } { ["fake"] = { "a", "b" } ]]
+    ["one"] = { "dict", "clip", [=[Label with } and {]=] },
+    --[=[ another block } ]=]
+    ["two"] = { "dict2", "clip2", "Two" },
+}
+`);
+assert.deepEqual(longLua.map(item => item.key), ['one', 'two']);
