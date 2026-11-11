@@ -29,6 +29,10 @@ function parseCatalog(source) {
             if (key === 'AnimationOptions' || key === 'Prop' || key === 'Ptfx') continue;
             const values = body.match(/^\s*["']([^"'\r\n]+)["']\s*,\s*["']([^"'\r\n]+)["']/);
             if (!values) continue;
+            // The standalone animation player does not attach emote props.
+            // Keep prop-dependent entries out of automated previews until their
+            // native PM Emotes playback can be used.
+            if (/\\b(?:Prop|SecondProp|PtfxAsset|PtfxName)\\s*=/.test(body)) continue;
             const dict = values[1], clip = values[2];
             if (dict.length > 200 || clip.length > 200) continue;
             result.push({ key, category, dict, clip });
