@@ -17,7 +17,7 @@ RegisterNetEvent('pm-autoshot:client:frameSaved', function(id, ok, detail)
     if pending[id] then pending[id] = { done = true, ok = ok, detail = detail } end
 end)
 
-local function captureFrame(name, frameIndex)
+local function captureFrame(name, frameIndex, interval)
     local done, image = false, nil
     exports['screenshot-basic']:requestScreenshot({ encoding = 'png' }, function(data)
         image = data
@@ -30,7 +30,7 @@ local function captureFrame(name, frameIndex)
     local id = uploadSequence
     pending[id] = { done = false }
     TriggerLatentServerEvent('pm-autoshot:server:animationFrame', 8000000, {
-        id = id, name = name, frame = frameIndex, imageData = image,
+        id = id, name = name, frame = frameIndex, imageData = image, interval = interval,
         chromaKey = Customize.ChromaKeyColor or 'green',
         transparent = Customize.TransparentBg == true,
         width = Customize.ScreenshotWidth or 256,
@@ -97,7 +97,7 @@ RegisterCommand('shotanimframes', function(_, args)
     end
     local count = math.floor(math.min(24, math.max(2, tonumber(args[3]) or 8)))
     local interval = math.floor(math.min(1000, math.max(100, tonumber(args[4]) or 200)))
-    local name = (dict .. '_' .. clip):gsub('[^%w_-]', '_'):sub(1, 96)
+    local name = (args[5] or (dict .. '_' .. clip)):gsub('[^%w_-]', '_'):sub(1, 96)
     if name == '' then notice('Invalid animation identifier'); return end
     capturing = true
     active = true
@@ -113,8 +113,9 @@ RegisterCommand('shotanimframes', function(_, args)
         TriggerEvent('pm-autoshot:client:openAnimationStudio')
         local studioDeadline = GetGameTimer() + 15000
         while studioResult == nil and GetGameTimer() < studioDeadline do Wait(50) end
-        if not studioResult or not studioResult.ok then
-            notice('Studio unavailable: ' .. tostring(studioResult and studioResult.reason or 'timeout'))
+        if not active or not studioResult or not studioResult.ok then
+            notice('Studio unavailable: ' .. tostring(studioResult and studioResult.reason or 'cancelled or timeout'))
+            TriggerEvent('pm-autoshot:client:closeAnimationStudio')
             RemoveAnimDict(dict)
             capturing = false; active = false; return
         end
@@ -123,17 +124,19 @@ RegisterCommand('shotanimframes', function(_, args)
         TaskPlayAnim(ped, dict, clip, 8.0, 8.0, -1, 1, 0.0, false, false, false)
         Wait(250)
         local saved = 0
+        local playbackStart = GetGameTimer()
         for i = 1, count do
             if not active then break end
-            local started = GetGameTimer()
-            local ok, detail = captureFrame(name, i)
+            local target = playbackStart + (i - 1) * interval
+            while active and GetGameTimer() < target do Wait(0) end
+            if not active then break end
+            local ok, detail = captureFrame(name, i, interval)
             if not ok then
                 notice('Frame ' .. i .. ' failed: ' .. tostring(detail))
                 break
             end
             saved = saved + 1
-            local remaining = interval - (GetGameTimer() - started)
-            if remaining > 0 then Wait(remaining) end
+
         end
         ClearPedTasks(ped)
         RemoveAnimDict(dict)
@@ -202,7 +205,7 @@ RegisterCommand('shotanimbatch', function(_, args)
             if not batchActive then break end
             local entry = catalog[i]
             notice(('Batch %d/%d: %s (%s)'):format(i, last, entry.key, entry.category))
-            ExecuteCommand(('shotanimframes %s %s %d %d'):format(entry.dict, entry.clip, frames, interval))
+            ExecuteCommand(('shotanimframes %s %s %d %d %s'):format(entry.dict, entry.clip, frames, interval, entry.key))
             local startDeadline = GetGameTimer() + 3000
             while batchActive and not capturing and GetGameTimer() < startDeadline do Wait(50) end
             local endDeadline = GetGameTimer() + 120000
