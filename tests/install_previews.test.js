@@ -35,6 +35,9 @@ try {
     fs.writeFileSync(path.join(shots, name), fakeWebP());
   }
   fs.writeFileSync(path.join(target, 'client', 'AnimationList.lua'), `
+RP.Dances = {
+    ["wave"] = { "dict@dance", "clip", "Dance wave" },
+}
 RP.Emotes = {
     ["wave"] = { "dict@wave", "clip", "Wave" },
     ["wave hello"] = { "dict@hello", "clip", "Wave hello" },
@@ -87,6 +90,10 @@ RP.Exits = {
   assert.throws(() => install(source, target, { dryRun: true }), /case-insensitive/);
   assert.throws(() => install(source, target), /case-insensitive/);
   fs.unlinkSync(path.join(shots, 'Emotes_Wave.webp'));
+
+  fs.writeFileSync(path.join(shots, 'Emotes_orphan.webp'), fakeWebP());
+  assert.throws(() => install(source, target, { dryRun: true }), /does not match installed PM Emotes catalog/);
+  fs.unlinkSync(path.join(shots, 'Emotes_orphan.webp'));
 
   console.log('PM Emotes preview installer fixture passed');
 } finally {
