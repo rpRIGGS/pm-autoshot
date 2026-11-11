@@ -141,6 +141,7 @@ local function captureAnimationFrames(args)
         while not native and active and not HasAnimDictLoaded(dict) and GetGameTimer() < deadline do Wait(50) end
         if not active or (not native and not HasAnimDictLoaded(dict)) then
             notice('Animation dictionary unavailable or capture cancelled: ' .. dict)
+            if not native then RemoveAnimDict(dict) end
             lastCaptureResult = { ok = false, name = name, reason = 'animation dictionary unavailable or cancelled' }
             capturing = false; active = false; return
         end
