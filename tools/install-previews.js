@@ -26,6 +26,16 @@ function install(source, destination, { dryRun = false } = {}) {
   if (!dryRun) {
     fs.mkdirSync(to, { recursive: true });
     fs.writeFileSync(path.join(to, 'manifest.json'), JSON.stringify({ version: 1, entries: manifest }, null, 2) + '\n');
+    // NUI files must be declared in the target resource manifest to load.
+    const fxPath = path.join(destination, 'fxmanifest.lua');
+    const fx = fs.readFileSync(fxPath, 'utf8');
+    if (!fx.includes("'client/NUI/previews/*'")) {
+      const filesBlock = /files\\s*\\{([\\s\\S]*?)\\}/m;
+      if (!filesBlock.test(fx)) throw new Error('PM Emotes manifest has no files block');
+      const updated = fx.replace(filesBlock, (block, body) =>
+        block.replace(body, body + "\\n    'client/NUI/previews/*',"));
+      fs.writeFileSync(fxPath, updated);
+    }
   }
   return { count: Object.keys(manifest).length, destination: to, dryRun, entries: manifest };
 }
