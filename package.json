@@ -1,5 +1,5 @@
 {
-  "name": "uz_autoshot",
+  "name": "pm-autoshot",
   "version": "1.0.0",
   "description": "Clothing Thumbnail Generator & Browser for FiveM",
   "main": "server/server.js",
