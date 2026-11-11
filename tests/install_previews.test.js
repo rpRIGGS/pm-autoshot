@@ -44,6 +44,17 @@ RP.PropEmotes = {
   install(source, target);
   assert.equal(fs.readFileSync(path.join(target, 'fxmanifest.lua'), 'utf8'), fx, 'manifest patch must be idempotent');
   assert.equal(fs.existsSync(path.join(target, 'client', 'NUI', 'previews', 'not-an-emote.webp')), false);
+  // Two different emote names may sanitize to the same WebP filename.
+  // Refuse to assign that asset to an arbitrary button.
+  fs.appendFileSync(path.join(target, 'client', 'AnimationList.lua'), `
+RP.Exits = {
+    ["say hello"] = { "dict@one", "clip", "One" },
+    ["say?hello"] = { "dict@two", "clip", "Two" },
+}
+`);
+  fs.writeFileSync(path.join(shots, 'Exits_say_hello.webp'), Buffer.alloc(40, 1));
+  assert.throws(() => install(source, target, { dryRun: true }), /Ambiguous preview filename/);
+
   console.log('PM Emotes preview installer fixture passed');
 } finally {
   fs.rmSync(root, { recursive: true, force: true });
