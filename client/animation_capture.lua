@@ -200,6 +200,7 @@ RegisterCommand('shotanimframes', function(_, args)
             end
         end
         if not lastCaptureResult then lastCaptureResult = { ok = false, name = name, reason = 'capture incomplete or cancelled' } end
+        if not lastCaptureResult.ok then TriggerServerEvent('pm-autoshot:server:abortAnimation', name) end
         TriggerEvent('pm-autoshot:client:closeAnimationStudio')
         capturing = false; active = false
         notice(('Captured %d/%d PNG frames for %s'):format(saved, count, name))
