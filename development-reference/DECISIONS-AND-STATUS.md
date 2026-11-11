@@ -108,3 +108,11 @@ These are implementation checks, **not reasons to replace the agreed approach or
 - Parser targets top-level entries using the indentation of the actual PM Emotes animation list; fixture tests now use the same layout. This remains a heuristic parser, not a Lua interpreter, and must be validated against the full live catalog.
 - Dictionary-loading and studio-startup failures now publish failure results to the batch controller so it can stop instead of reporting misleading progress.
 - The production goal remains **unfinished**: full native emote playback and PM Emotes NUI integration are not yet implemented, and actual FXServer validation is still required.
+
+
+## PM Emotes NUI integration checkpoint
+
+- The PM Emotes repository now contains `client/NUI/js/autoshot-previews.js`, loaded by its NUI index. It displays generated animated WebP previews for focused/hovered emote buttons, using the deployment manifest; absent entries fall back silently.
+- PM Emotes `fxmanifest.lua` declares `client/NUI/previews/*` and `development-reference/PM-AUTOSHOT-PREVIEWS.md` documents deployment.
+- PM AutoShot includes `tools/install-previews.js` and an installer regression fixture; deployment is an explicit server-admin action after capture.
+- **Still required:** actual FiveM screenshot/encoder validation, full native PM Emotes playback for prop/scenario/specialized entries, and complete end-to-end verification. The NUI connection exists but is not proof of production readiness.
