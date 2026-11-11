@@ -105,7 +105,7 @@ end, false)
 
 -- First capture pipeline: playback + timed PNG frame uploads.
 -- Frames are written into shots/animations/<name>/ as an intermediate sequence.
-RegisterCommand('shotanimframes', function(_, args)
+local function captureAnimationFrames(args)
     if active or capturing then notice('Capture already in progress'); return end
     local dict, clip = args[1], args[2]
     local native = dict == 'native:pm-emotes'
@@ -257,6 +257,9 @@ RegisterCommand('shotanimframes', function(_, args)
         capturing = false; active = false
         notice(('Captured %d/%d PNG frames for %s'):format(saved, count, name))
     end)
+end
+RegisterCommand('shotanimframes', function(_, args)
+    captureAnimationFrames(args)
 end, false)
 
 -- Catalog is fetched from the installed PM Emotes resource via the server.
@@ -316,13 +319,9 @@ RegisterCommand('shotanimbatch', function(_, args)
             notice(('Batch %d/%d: %s (%s)'):format(i, last, entry.key, entry.category))
             local outputName = (entry.category .. '_' .. entry.key):gsub('[^%w_-]', '_'):sub(1, 96)
             local dict, clip = entry.native and 'native:pm-emotes' or entry.dict, entry.native and entry.key or entry.clip
-            -- Quote native emote keys that contain spaces; reject quotes and
-            -- control characters rather than sending malformed commands.
-            if clip:find('[%c"]') then
-                notice('Batch skipped unsupported emote key: ' .. entry.key)
-            else
-                ExecuteCommand(('shotanimframes %s "%s" %d %d %s'):format(dict, clip, frames, interval, outputName))
-            end
+            -- Invoke the capture function directly. Console commands split
+            -- whitespace and cannot safely preserve all catalog emote IDs.
+            captureAnimationFrames({ dict, clip, tostring(frames), tostring(interval), outputName })
             local startDeadline = GetGameTimer() + 3000
             while batchActive and not capturing and GetGameTimer() < startDeadline do Wait(50) end
             local endDeadline = GetGameTimer() + 120000
