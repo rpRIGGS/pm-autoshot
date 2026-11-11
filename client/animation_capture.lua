@@ -290,6 +290,17 @@ RegisterCommand('shotanimbatch', function(_, args)
             return
         end
         local last = math.min(#catalog, first + count - 1)
+        local outputOwners = {}
+        for i = first, last do
+            local item = catalog[i]
+            local filename = (item.category .. '_' .. item.key):gsub('[^%w_-]', '_'):sub(1, 96)
+            if outputOwners[filename] then
+                notice(('Batch aborted: %s and %s share output filename %s'):format(outputOwners[filename], item.key, filename))
+                batchActive = false
+                return
+            end
+            outputOwners[filename] = item.key
+        end
         for i = first, last do
             if not batchActive then break end
             local entry = catalog[i]
