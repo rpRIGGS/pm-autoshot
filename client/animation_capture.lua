@@ -142,7 +142,14 @@ RegisterCommand('shotanimframes', function(_, args)
                 TriggerEvent('pm-autoshot:client:closeAnimationStudio')
                 capturing = false; active = false; return
             end
-            TriggerEvent('animations:client:EmoteCommandStart', { clip })
+            local ok, err = pcall(function()
+                TriggerEvent('animations:client:EmoteCommandStart', { clip })
+            end)
+            if not ok then
+                lastCaptureResult = { ok = false, name = name, reason = tostring(err) }
+                TriggerEvent('pm-autoshot:client:closeAnimationStudio')
+                capturing = false; active = false; return
+            end
         else
             TaskPlayAnim(ped, dict, clip, 8.0, 8.0, -1, 1, 0.0, false, false, false)
         end
