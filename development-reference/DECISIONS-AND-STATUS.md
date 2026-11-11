@@ -76,3 +76,11 @@ These are implementation checks, **not reasons to replace the agreed approach or
 - Added `npm run test:webp` for repeatable regression validation. The committed regression test still needs to be run from a checked-out repository with dependencies installed.
 - Published WebP files are now written to a temporary path and renamed on success to reduce the chance of incomplete output being consumed by the UI.
 - **Important timing caveat:** the current capture loop waits for each screenshot upload acknowledgement before starting the next screenshot. If processing takes longer than the requested interval, actual sampled motion can be slower than the declared WebP frame delay. This must be corrected before claiming faithful animation timing.
+
+
+## Buffered frame capture update
+
+- Screenshot sampling and latent server upload are now separate phases; screenshot timestamps are measured and average sample spacing is passed as WebP delay. This avoids server upload latency distorting animation playback.
+- Individual screenshots are capped at 8 MiB before buffering; at the maximum 24-frame batch this still allows substantial temporary client memory, so memory usage and large-catalog throughput need testing.
+- The current encoder accepts one uniform average frame delay, not individual variable delays. Screenshot-basic capture latency can still produce uneven sampling, especially on slow clients.
+- **Not production-ready:** requires actual FiveM screenshot/basic test, sharp native-module compatibility check, complete emote-type coverage, and PM Emotes NUI asset integration.
