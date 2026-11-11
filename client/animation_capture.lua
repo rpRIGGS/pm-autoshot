@@ -11,6 +11,7 @@ local uploadSequence = 0
 local finishResults = {}
 local lastCaptureResult = nil
 local activeNative = false
+local activeCaptureName = nil
 RegisterNetEvent('pm-autoshot:client:animationFinished', function(id, ok, detail)
     if finishResults[id] then finishResults[id] = { done = true, ok = ok, detail = detail } end
 end)
@@ -81,6 +82,7 @@ AddEventHandler('onClientResourceStop', function(resource)
     end
     activeNative = false
     if capturing then
+        if activeCaptureName then TriggerServerEvent('pm-autoshot:server:abortAnimation', activeCaptureName) end
         TriggerEvent('pm-autoshot:client:closeAnimationStudio')
     end
 end)
@@ -97,8 +99,8 @@ RegisterCommand('shotanimstop', function()
     end
     activeNative = false
     if capturing then
+        if activeCaptureName then TriggerServerEvent('pm-autoshot:server:abortAnimation', activeCaptureName) end
         TriggerEvent('pm-autoshot:client:closeAnimationStudio')
-        -- The capture worker sends the final abort once it unwinds.
     end
     notice('Animation playback stopped')
 end, false)
@@ -154,6 +156,7 @@ local function captureAnimationFrames(args)
     if name == '' then notice('Invalid animation identifier'); return end
     capturing = true
     active = true
+    activeCaptureName = name
     lastCaptureResult = nil
     CreateThread(function()
         if not native then RequestAnimDict(dict) end
