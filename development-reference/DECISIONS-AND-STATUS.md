@@ -92,3 +92,11 @@ These are implementation checks, **not reasons to replace the agreed approach or
 - Encoding locks are released on errors, allowing recovery rather than leaving a permanently blocked capture name.
 - WebP frame delay now accepts measured sampling intervals down to 1 ms and up to 10 seconds; previous 100–1000 ms clamp could silently misrepresent screenshot capture timing.
 - Remaining validation: execute regression tests in checked-out repo, verify native Sharp installation on the actual FXServer runtime, and exercise capture/restoration in FiveM.
+
+
+## Catalog and batch hardening
+
+- Catalog now reads both `client/AnimationList.lua` and `client/AnimationListCustom.lua`, recognizing both `RP` and `CustomDP` declarations. The custom file in the current PM Emotes repository is empty, but support is present for later entries.
+- The standalone capture command currently supports dictionary/clip animations only. Entries with prop or particle metadata are excluded rather than captured inaccurately; scenario, shared, animal, and other special emote types still need native playback integration.
+- Batch output filenames include the category and key, avoiding collisions between dances, emotes, and exits. Batch execution now checks export success and stops when a preview fails.
+- **Outstanding for completion:** validate Lua/JS runtime in FiveM; integrate full PM Emotes playback including props, scenarios and specialized categories; connect generated WebP files to the PM Emotes NUI; validate the complete workflow and release a server-testable build. Do not describe the current state as finished.
