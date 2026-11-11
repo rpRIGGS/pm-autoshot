@@ -72,8 +72,10 @@ function install(source, destination, { dryRun = false } = {}) {
       throw new Error('Invalid WebP capture: ' + filename);
     const match = /^(Emotes|Dances|Exits|PropEmotes)_(.+)\.webp$/.exec(filename);
     const keys = knownKeys.get(filename.toLowerCase());
-    if (keys && keys.length > 1) throw new Error('Ambiguous preview filename: ' + filename + ' (' + keys.join(', ') + ')');
-    const key = keys ? keys[0] : match[1] + ':' + match[2];
+    if (!keys || keys.length === 0)
+      throw new Error('Preview does not match installed PM Emotes catalog: ' + filename);
+    if (keys.length > 1) throw new Error('Ambiguous preview filename: ' + filename + ' (' + keys.join(', ') + ')');
+    const key = keys[0];
     manifest[key] = 'previews/' + filename;
     plan.push({ file, filename });
   }
