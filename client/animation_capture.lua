@@ -169,6 +169,8 @@ local function captureAnimationFrames(args)
             end)
             if not ok then
                 lastCaptureResult = { ok = false, name = name, reason = tostring(err) }
+                pcall(function() exports['pm-emotes']:EmoteCancel() end)
+                activeNative = false
                 TriggerEvent('pm-autoshot:client:closeAnimationStudio')
                 capturing = false; active = false; return
             end
