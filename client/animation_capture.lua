@@ -91,8 +91,8 @@ end)
 
 RegisterCommand('shotanimstop', function()
     active = false
-    if capturing and lastCaptureResult == nil then
-        lastCaptureResult = { ok = false, reason = 'capture cancelled by user' }
+    if capturing then
+        lastCaptureResult = { ok = false, name = activeCaptureName, reason = 'capture cancelled by user' }
     end
     if activeNative and GetResourceState('pm-emotes') == 'started' then
         pcall(function() exports['pm-emotes']:EmoteCancel() end)
@@ -295,7 +295,11 @@ local function captureAnimationFrames(args)
                 notice('WebP export failed: ' .. tostring(result and result.detail or 'timeout'))
             end
         end
-        if not lastCaptureResult then lastCaptureResult = { ok = false, name = name, reason = 'capture incomplete or cancelled' } end
+        if not active then
+            lastCaptureResult = { ok = false, name = name, reason = 'capture cancelled' }
+        elseif not lastCaptureResult then
+            lastCaptureResult = { ok = false, name = name, reason = 'capture incomplete' }
+        end
         if not lastCaptureResult.ok then TriggerServerEvent('pm-autoshot:server:abortAnimation', name) end
         TriggerEvent('pm-autoshot:client:closeAnimationStudio')
         capturing = false; active = false
