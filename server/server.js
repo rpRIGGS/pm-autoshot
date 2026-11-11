@@ -427,6 +427,31 @@ onNet('pm-autoshot:server:animationFrame', (payload) => {
 });
 
 
+// Lightweight runtime readiness check for the full preview pipeline.
+onNet('pm-autoshot:server:diagnoseAnimation', () => {
+    const src = source;
+    if (!checkAce(src)) return;
+    const results = {
+        sharp: Boolean(sharp),
+        pngjs: Boolean(PNG),
+        emotes: GetResourceState('pm-emotes') === 'started',
+        screenshot: GetResourceState('screenshot-basic') === 'started',
+        outputWritable: false,
+        catalogCount: 0,
+        catalogError: null
+    };
+    try {
+        fs.mkdirSync(path.join(OUTPUT_DIR, 'animations'), { recursive: true });
+        const probe = path.join(OUTPUT_DIR, 'animations', '.write-check-' + String(src));
+        fs.writeFileSync(probe, '');
+        fs.unlinkSync(probe);
+        results.outputWritable = true;
+    } catch (e) { results.catalogError = 'output path: ' + e.message; }
+    try { results.catalogCount = require('./emote_catalog').readCatalog('pm-emotes').length; }
+    catch (e) { results.catalogError = (results.catalogError ? results.catalogError + '; ' : '') + e.message; }
+    emitNet('pm-autoshot:client:diagnostics', src, results);
+});
+
 // Catalog is always loaded from the live PM Emotes installation, not a frozen list.
 onNet('pm-autoshot:server:requestCatalog', () => {
     const src = source;
