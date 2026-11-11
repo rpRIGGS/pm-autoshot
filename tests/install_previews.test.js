@@ -82,6 +82,12 @@ RP.Exits = {
   assert.throws(() => install(source, target, { dryRun: true }), /Invalid WebP capture/);
 
 
+  fs.unlinkSync(path.join(shots, 'Emotes_corrupt.webp'));
+  fs.writeFileSync(path.join(shots, 'Emotes_Wave.webp'), fakeWebP());
+  assert.throws(() => install(source, target, { dryRun: true }), /case-insensitive/);
+  assert.throws(() => install(source, target), /case-insensitive/);
+  fs.unlinkSync(path.join(shots, 'Emotes_Wave.webp'));
+
   console.log('PM Emotes preview installer fixture passed');
 } finally {
   fs.rmSync(root, { recursive: true, force: true });
