@@ -82,7 +82,10 @@ RegisterCommand('shotanimstop', function()
         ClearPedTasksImmediately(PlayerPedId())
     end
     activeNative = false
-    if capturing then TriggerEvent('pm-autoshot:client:closeAnimationStudio') end
+    if capturing then
+        TriggerEvent('pm-autoshot:client:closeAnimationStudio')
+        -- The capture worker sends the final abort once it unwinds.
+    end
     notice('Animation playback stopped')
 end, false)
 
