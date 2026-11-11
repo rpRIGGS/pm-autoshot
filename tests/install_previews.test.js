@@ -47,7 +47,7 @@ RP.PropEmotes = {
   const manifest = JSON.parse(fs.readFileSync(path.join(target, 'client', 'NUI', 'previews', 'manifest.json'), 'utf8'));
   assert.deepEqual(manifest.entries, result.entries);
   const fx = fs.readFileSync(path.join(target, 'fxmanifest.lua'), 'utf8');
-  assert.match(fx, /'client\\/NUI\\/previews\\/\\*'/);
+  assert.ok(fx.includes("'client/NUI/previews/*'"));
   install(source, target);
   assert.equal(fs.readFileSync(path.join(target, 'fxmanifest.lua'), 'utf8'), fx, 'manifest patch must be idempotent');
   assert.equal(fs.existsSync(path.join(target, 'client', 'NUI', 'previews', 'not-an-emote.webp')), false);
