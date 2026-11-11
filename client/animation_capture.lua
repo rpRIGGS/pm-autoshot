@@ -56,6 +56,21 @@ local function notice(message)
     print('[PM AutoShot] ' .. message)
 end
 
+RegisterNetEvent('pm-autoshot:client:diagnostics', function(status)
+    if type(status) ~= 'table' then return end
+    local function flag(value) return value and 'OK' or 'MISSING' end
+    notice(('Doctor: sharp=%s pngjs=%s screenshot-basic=%s pm-emotes=%s writable=%s catalog=%d'):format(
+        flag(status.sharp), flag(status.pngjs), flag(status.screenshot),
+        flag(status.emotes), flag(status.outputWritable), tonumber(status.catalogCount) or 0))
+    if status.catalogError then notice('Doctor: ' .. tostring(status.catalogError)) end
+end)
+
+RegisterCommand('shotanimdoctor', function()
+    notice(('Doctor: local screenshot-basic=%s pm-emotes=%s'):format(
+        GetResourceState('screenshot-basic'), GetResourceState('pm-emotes')))
+    TriggerServerEvent('pm-autoshot:server:diagnoseAnimation')
+end, false)
+
 RegisterCommand('shotanimstop', function()
     active = false
     if activeNative and GetResourceState('pm-emotes') == 'started' then
