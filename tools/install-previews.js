@@ -22,7 +22,8 @@ function install(source, destination, { dryRun = false } = {}) {
     for (const entry of parseCatalog(fs.readFileSync(file, 'utf8'))) {
       const encoded = (entry.category + '_' + entry.key).replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 96) + '.webp';
       const keys = knownKeys.get(encoded) || [];
-      keys.push(entry.category + ':' + entry.key);
+      const original = entry.category + ':' + entry.key;
+      if (!keys.includes(original)) keys.push(original);
       knownKeys.set(encoded, keys);
     }
   }
