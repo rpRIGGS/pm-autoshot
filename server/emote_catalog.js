@@ -1,42 +1,54 @@
-// Read-only PM Emotes catalog parser. Only plain dictionary animations are
-// eligible for standalone capture; complex emotes require native playback.
+// Read-only PM Emotes catalog. No Lua code is evaluated.
 const fs = require('fs');
 const path = require('path');
 
+// Read a balanced Lua table while ignoring braces inside strings and comments.
+function tableEnd(text, open) {
+    let depth = 0, quote = null, comment = false;
+    for (let i = open; i < text.length; i++) {
+        const ch = text[i], next = text[i + 1];
+        if (comment) { if (ch === '\n') comment = false; continue; }
+        if (quote) {
+            if (ch === '\\') { i++; continue; }
+            if (ch === quote) quote = null;
+            continue;
+        }
+        if (ch === '-' && next === '-') { comment = true; i++; continue; }
+        if (ch === '"' || ch === "'") { quote = ch; continue; }
+        if (ch === '{') depth++;
+        if (ch === '}' && --depth === 0) return i;
+    }
+    return -1;
+}
+
 function parseCatalog(source) {
-    const categories = ['Emotes', 'Dances', 'Exits'];
-    const results = [];
-    for (const category of categories) {
-        const declaration = new RegExp('(?:RP|CustomDP)\\.' + category + '\\s*=\\s*\\{', 'g');
+    const result = [];
+    for (const category of ['Emotes', 'Dances', 'Exits']) {
+        const declaration = new RegExp('(?:RP|CustomDP)\\.' + category + '\\s*=\\s*\\{');
         const found = declaration.exec(source);
         if (!found) continue;
-        const start = found.index + found[0].length;
-        // A section ends at the next top-level category declaration.
-        const rest = source.slice(start);
-        const next = /(?:^|\n)\s*(?:RP|CustomDP)\.[A-Za-z]+\s*=\s*\{/m.exec(rest);
-        const section = next ? rest.slice(0, next.index) : rest;
-        const entry = /^    \[["']([^"'\r\n]+)["']\]\s*=\s*\{/gm;
+        const open = found.index + found[0].lastIndexOf('{');
+        const end = tableEnd(source, open);
+        if (end < 0) continue;
+        const section = source.slice(open + 1, end);
+        const header = /^[ \t]*\[["']([^"'\r\n]+)["']\]\s*=\s*\{/gm;
         let match;
-        while ((match = entry.exec(section))) {
+        while ((match = header.exec(section))) {
             const key = match[1];
-            if (['AnimationOptions', 'Prop', 'Ptfx'].includes(key)) continue;
-            const body = section.slice(entry.lastIndex);
+            const entryOpen = header.lastIndex - 1;
+            const entryEnd = tableEnd(section, entryOpen);
+            if (entryEnd < 0) continue;
+            const body = section.slice(entryOpen + 1, entryEnd);
+            // Only the first two string values identify plain dictionary clips.
             const values = /^\s*["']([^"'\r\n]+)["']\s*,\s*["']([^"'\r\n]+)["']/.exec(body);
-            if (!values) continue;
-            // Inspect the complete entry until the next same-level declaration.
-            // Nested animation options are not eligible for plain playback if
-            // they require props, attached objects, or particle effects.
-            const nextEntry = /\n    \["'][^"'\r\n]+["']\s*=\s*\{/g;
-            const remaining = section.slice(entry.lastIndex);
-            const following = nextEntry.exec(remaining);
-            const detail = following ? remaining.slice(0, following.index) : remaining;
-            if (/\b(?:Prop|SecondProp|PtfxAsset|PtfxName)\s*=/.test(detail)) continue;
-            const [dict, clip] = values.slice(1);
-            if (dict.length > 200 || clip.length > 200) continue;
-            results.push({ key, category, dict, clip });
+            if (values && !/\b(?:Prop|SecondProp|PtfxAsset|PtfxName)\s*=/.test(body)) {
+                const [, dict, clip] = values;
+                if (dict.length <= 200 && clip.length <= 200) result.push({ key, category, dict, clip });
+            }
+            header.lastIndex = entryEnd + 1;
         }
     }
-    return results;
+    return result;
 }
 
 function readCatalog(resourceName = 'pm-emotes') {
@@ -53,4 +65,4 @@ function readCatalog(resourceName = 'pm-emotes') {
     return [...combined.values()];
 }
 
-module.exports = { parseCatalog, readCatalog };
+module.exports = { tableEnd, parseCatalog, readCatalog };
