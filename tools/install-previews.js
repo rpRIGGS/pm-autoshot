@@ -93,7 +93,7 @@ function install(source, destination, { dryRun = false } = {}) {
     const catalogIdentities = new Set([].concat(...Array.from(knownKeys.values())));
     for (const [key, asset] of Object.entries(previous.entries)) {
       if (Object.hasOwn(manifest, key) || !catalogIdentities.has(key)) continue;
-      if (typeof asset !== 'string' || !/^previews\\/[A-Za-z0-9_-]+\\.webp$/.test(asset))
+      if (typeof asset !== 'string' || !/^previews\/[A-Za-z0-9_-]+\.webp$/.test(asset))
         throw new Error('Unsafe existing preview manifest entry: ' + key);
       if (fs.existsSync(path.join(to, path.basename(asset))))
         manifest[key] = asset;
