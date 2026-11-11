@@ -310,9 +310,18 @@ onNet('pm-autoshot:server:finishAnimation', async (payload) => {
         for (let i = 1; i <= frames; i++) {
             const frame = session.frames.get(i);
             if (!frame) throw new Error('missing frame ' + i);
-            const png = PNG.sync.read(fs.readFileSync(frame));
-            if (i === 1) { width = png.width; height = png.height; }
-            if (png.width !== width || png.height !== height) throw new Error('frame dimensions mismatch');
+            const rawFrame = fs.readFileSync(frame);
+            if (rawFrame.length < 24 || rawFrame.toString('hex', 0, 8) !== '89504e470d0a1a0a' ||
+                rawFrame.toString('ascii', 12, 16) !== 'IHDR') throw new Error('invalid staged PNG header');
+            const frameWidth = rawFrame.readUInt32BE(16);
+            const frameHeight = rawFrame.readUInt32BE(20);
+            if (!frameWidth || !frameHeight || frameWidth > 1024 || frameHeight > 1024 ||
+                frameWidth * frameHeight * frames > 1024 * 1024 * 24)
+                throw new Error('animation pixel budget exceeded');
+            if (i === 1) { width = frameWidth; height = frameHeight; }
+            if (frameWidth !== width || frameHeight !== height) throw new Error('frame dimensions mismatch');
+            const png = PNG.sync.read(rawFrame);
+            if (png.width !== frameWidth || png.height !== frameHeight) throw new Error('staged PNG dimensions mismatch');
             buffers.push(png.data);
         }
         if (width * height * frames > 1024 * 1024 * 24) throw new Error('animation pixel budget exceeded');
