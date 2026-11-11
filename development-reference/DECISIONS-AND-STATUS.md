@@ -125,3 +125,12 @@ These are implementation checks, **not reasons to replace the agreed approach or
 - The existing studio captures native playback, waits for PM Emotes' `IsPlayerInAnim` export to confirm animation started, and invokes `EmoteCancel` when capture completes. Native batch entries have a longer pause to reduce cooldown interference.
 - The preview installer accepts `PropEmotes_*.webp` files. The PM Emotes NUI preview manifest resolves them using existing emote type/key data attributes.
 - **Unverified in FiveM:** PM Emotes permission/state handling, studio compatibility with prop attachment/scenarios, native cancellation and actual WebP quality. Shared and animal emotes are not yet supported; they need a separate compatibility plan rather than blindly treating them as ordinary animations.
+
+
+## Capture-to-preview reliability follow-up
+
+- Preview deployment now validates complete destination mapping before writing, restores original emote keys (including spaces), refuses ambiguous sanitized names, and validates RIFF WebP headers/sizes.
+- Batch capture checks filename collisions before processing the selected range, avoiding silent overwrites.
+- Native PM Emotes playback requires the requested emote to be reported active and handles startup exceptions.
+- Added installer regression fixtures for original-name mapping, collision rollback, and invalid WebP headers.
+- **Execution evidence:** GitHub commits exist; live FiveM capture and actual regression execution are not confirmed in this conversation. Do not label these fixes tested or production-ready until the workflow passes and FiveM is exercised.
