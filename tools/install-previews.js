@@ -48,10 +48,11 @@ function install(source, destination, { dryRun = false } = {}) {
     if (!fs.existsSync(file)) continue;
     for (const entry of parseCatalog(fs.readFileSync(file, 'utf8'))) {
       const encoded = (entry.category + '_' + entry.key).replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 96) + '.webp';
-      const keys = knownKeys.get(encoded) || [];
+      const collisionKey = encoded.toLowerCase();
+      const keys = knownKeys.get(collisionKey) || [];
       const original = entry.category + ':' + entry.key;
       if (!keys.includes(original)) keys.push(original);
-      knownKeys.set(encoded, keys);
+      knownKeys.set(collisionKey, keys);
     }
   }
   const files = fs.readdirSync(from).filter(name => /^(Emotes|Dances|Exits|PropEmotes)_[A-Za-z0-9_-]+\.webp$/.test(name)).sort();
@@ -65,7 +66,7 @@ function install(source, destination, { dryRun = false } = {}) {
     if (!validateAnimatedWebP(file, stat))
       throw new Error('Invalid WebP capture: ' + filename);
     const match = /^(Emotes|Dances|Exits|PropEmotes)_(.+)\.webp$/.exec(filename);
-    const keys = knownKeys.get(filename);
+    const keys = knownKeys.get(filename.toLowerCase());
     if (keys && keys.length > 1) throw new Error('Ambiguous preview filename: ' + filename + ' (' + keys.join(', ') + ')');
     const key = keys ? keys[0] : match[1] + ':' + match[2];
     manifest[key] = 'previews/' + filename;
