@@ -25,7 +25,7 @@ Updated: 2026-11-11
 - [x] User created and authorized access to the GitHub fork.
 - [x] Root README updated to explain the PowerMoves expansion and preserve original upstream documentation.
 - [x] Development reference folder and planning documents established.
-- [ ] Resource renaming and baseline code audit completed.
+- [x] Initial resource audit completed; fixed hardcoded `cfx-nui-uz_AutoShot` shot URLs, manifest identity and npm package name for `pm-autoshot`. FiveM validation pending.
 - [ ] Animation playback implemented.
 - [ ] Multi-frame capture implemented.
 - [ ] Animated WebP export implemented.
@@ -33,7 +33,7 @@ Updated: 2026-11-11
 - [ ] FiveM in-server tests passed.
 - [ ] Complete PM Emotes preview library generated.
 
-**Status:** Documentation and scope are established. Capture code has not yet been implemented or validated.
+**Status:** Initial naming compatibility changes committed. Existing upstream event names remain intentionally unchanged to preserve internal client/server compatibility. Animation capture and animated WebP code are not yet implemented or validated.
 
 ## Technical issues to resolve through implementation
 
@@ -45,7 +45,16 @@ Updated: 2026-11-11
 
 These are implementation checks, **not reasons to replace the agreed approach or ask the user to restart planning**.
 
+## Audit findings
+
+- `fxmanifest.lua` declares `screenshot-basic` and `yarn`; client uses screenshot-basic screenshot callbacks and latent server uploads.
+- `server/server.js` processes individual screenshots with `pngjs`, chroma key removal, resizing, and writes into `shots/`.
+- `client/client.lua` used hardcoded `https://cfx-nui-uz_AutoShot/shots` URLs, now adjusted for `pm-autoshot`.
+- Original `uz_autoshot:*` events and `uz_autoshot_*` convars remain paired across client and server; renaming only one side would break existing capture functionality.
+- Animated WebP encoding requires a separate implementation and runtime verification.
+
 ## Change log
 
 - **2026-11-11:** Fork README updated and original documentation retained.
 - **2026-11-11:** Added development-reference planning, scope, implementation checklist, and decision log.
+- **2026-11-11:** Audited source and committed initial fork naming and NUI URL compatibility updates.
