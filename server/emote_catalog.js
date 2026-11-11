@@ -56,28 +56,45 @@ function parseCatalog(source) {
         const end = tableEnd(source, open);
         if (end < 0) continue;
         const section = source.slice(open + 1, end);
-        const header = /^[ \t]*\[["']([^"'\r\n]+)["']\]\s*=\s*\{/gm;
-        let match;
-        while ((match = header.exec(section))) {
+        // Match only top-level entries, not examples in comments or nested
+        // option tables. tableEnd alone is insufficient for that distinction.
+        let cursor = 0;
+        while (cursor < section.length) {
+            while (cursor < section.length && /[\s,;]/.test(section[cursor])) cursor++;
+            if (section.startsWith('--', cursor)) {
+                const long = /^--\[(=*)\[/.exec(section.slice(cursor, cursor + 32));
+                if (long) {
+                    const closing = ']' + long[1] + ']';
+                    const closeAt = section.indexOf(closing, cursor + long[0].length);
+                    cursor = closeAt < 0 ? section.length : closeAt + closing.length;
+                } else {
+                    const nl = section.indexOf('\n', cursor);
+                    cursor = nl < 0 ? section.length : nl + 1;
+                }
+                continue;
+            }
+            const match = /^\[["']([^"'\r\n]+)["']\]\s*=\s*\{/.exec(section.slice(cursor));
+            if (!match) {
+                const nl = section.indexOf('\n', cursor);
+                cursor = nl < 0 ? section.length : nl + 1;
+                continue;
+            }
             const key = match[1];
-            const entryOpen = header.lastIndex - 1;
+            const entryOpen = cursor + match[0].lastIndexOf('{');
             const entryEnd = tableEnd(section, entryOpen);
-            if (entryEnd < 0) continue;
+            if (entryEnd < 0) break;
             const body = section.slice(entryOpen + 1, entryEnd);
-            // Keep native PM Emotes playback for props and scenarios rather
-            // than silently omitting them or capturing the wrong plain clip.
             const values = /^\s*["']([^"'\r\n]+)["']\s*,\s*["']([^"'\r\n]+)["']/.exec(body);
             const scenario = /^\s*(?:ScenarioType\.)?[A-Z_]+\s*,/.test(body);
             const requiresNative = category === 'PropEmotes' ||
                 /\b(?:Prop|SecondProp|PtfxAsset|PtfxName)\s*=/.test(body) || scenario;
-            if (requiresNative) {
-                result.push({ key, category, native: true });
-            } else if (values) {
+            if (requiresNative) result.push({ key, category, native: true });
+            else if (values) {
                 const [, dict, clip] = values;
                 if (dict.length <= 200 && clip.length <= 200)
                     result.push({ key, category, dict, clip, native: false });
             }
-            header.lastIndex = entryEnd + 1;
+            cursor = entryEnd + 1;
         }
         declaration.lastIndex = end + 1;
         }
