@@ -331,19 +331,20 @@ onNet('pm-autoshot:server:animationFrame', (payload) => {
         const width = Math.max(32, Math.min(1024, parseInt(payload.width, 10) || 256));
         const height = Math.max(32, Math.min(1024, parseInt(payload.height, 10) || 256));
         png = resizePNG(png, width, height);
-        const folder = path.join(OUTPUT_DIR, 'animations', name);
-        fs.mkdirSync(folder, { recursive: true });
-        const filename = String(frame).padStart(3, '0') + '.png';
-        fs.writeFileSync(path.join(folder, filename), PNG.sync.write(png, { colorType: 6 }));
         cleanupAnimationSessions();
         const key = animationKey(src, name);
         if (!animationSessions.has(key)) {
             if (animationSessions.size >= MAX_ANIMATION_SESSIONS) throw new Error('too many active sessions');
             animationSessions.set(key, { created: Date.now(), frames: new Map() });
         }
-        animationSessions.get(key).frames.set(frame, path.join(folder, filename));
+        const folder = path.join(OUTPUT_DIR, 'animations', String(src), name);
+        fs.mkdirSync(folder, { recursive: true });
+        const filename = String(frame).padStart(3, '0') + '.png';
+        const framePath = path.join(folder, filename);
+        fs.writeFileSync(framePath, PNG.sync.write(png, { colorType: 6 }));
+        animationSessions.get(key).frames.set(frame, framePath);
         ok = true;
-        detail = 'animations/' + name + '/' + filename;
+        detail = 'animations/' + String(src) + '/' + name + '/' + filename;
     } catch (e) {
         detail = e.message || String(e);
         console.log('[PM AutoShot] Animation frame rejected: ' + detail);
