@@ -54,3 +54,13 @@ RP.PropEmotes = {
 `);
 assert.equal(props.length, 1);
 assert.deepEqual({key:props[0].key, native:props[0].native, category:props[0].category}, {key:'coffee', native:true, category:'PropEmotes'});
+
+const repeated = parseCatalog(`
+RP.Emotes = {
+    ["one"] = { "dict@one", "clip", "One" },
+}
+RP.Emotes = {
+    ["two"] = { "dict@two", "clip", "Two" },
+}
+`);
+assert.deepEqual(repeated.map(item => item.key), ['one', 'two']);
