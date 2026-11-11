@@ -83,3 +83,12 @@ RP.Emotes = {
 }
 `);
 assert.deepEqual(misleading.map(item => item.key), ['real']);
+
+const unusual = parseCatalog(`
+RP.Emotes = {
+    ["special"] = { AnimationType.CUSTOM, "special_anim", "Special" },
+    ["normal"] = { "normal@dict", "clip", "Normal" },
+}
+`);
+assert.deepEqual(unusual.map(item => item.key), ['special', 'normal']);
+assert.equal(unusual[0].native, true);
