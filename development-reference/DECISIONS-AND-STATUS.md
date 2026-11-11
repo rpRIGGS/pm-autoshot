@@ -100,3 +100,11 @@ These are implementation checks, **not reasons to replace the agreed approach or
 - The standalone capture command currently supports dictionary/clip animations only. Entries with prop or particle metadata are excluded rather than captured inaccurately; scenario, shared, animal, and other special emote types still need native playback integration.
 - Batch output filenames include the category and key, avoiding collisions between dances, emotes, and exits. Batch execution now checks export success and stops when a preview fails.
 - **Outstanding for completion:** validate Lua/JS runtime in FiveM; integrate full PM Emotes playback including props, scenarios and specialized categories; connect generated WebP files to the PM Emotes NUI; validate the complete workflow and release a server-testable build. Do not describe the current state as finished.
+
+
+## Catalog parser and batch failure checkpoint
+
+- Base and custom animation-list parsing now share a single parser, with custom entries overriding matching base entries by category/key.
+- Parser targets top-level entries using the indentation of the actual PM Emotes animation list; fixture tests now use the same layout. This remains a heuristic parser, not a Lua interpreter, and must be validated against the full live catalog.
+- Dictionary-loading and studio-startup failures now publish failure results to the batch controller so it can stop instead of reporting misleading progress.
+- The production goal remains **unfinished**: full native emote playback and PM Emotes NUI integration are not yet implemented, and actual FXServer validation is still required.
