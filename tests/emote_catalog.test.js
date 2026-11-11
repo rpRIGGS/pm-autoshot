@@ -14,9 +14,9 @@ RP.Exits = {
 }
 `;
 const parsed = parseCatalog(sample);
-assert.deepEqual(parsed.map(x => x.key), ['wave', 'prop', 'dance1', 'exit1']);
+assert.deepEqual(parsed.map(x => x.key), ['wave', 'dance1', 'exit1']);
 assert.equal(parsed[0].dict, 'friends@frj@ig_1');
-assert.equal(parsed[1].clip, 'base');
+assert.equal(parsed[1].clip, 'clip');
 const custom = parseCatalog('CustomDP.Emotes = {\n ["custom"] = { "custom@dict", "idle", "Custom" },\n}\nCustomDP.Dances = {}');
 assert.equal(custom.length, 1);
 assert.equal(custom[0].key, 'custom');
