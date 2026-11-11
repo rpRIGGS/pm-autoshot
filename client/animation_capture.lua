@@ -2,6 +2,10 @@
 -- The production batch pipeline will reuse the existing AutoShot studio camera.
 local active = false
 local capturing = false
+local studioResult = nil
+RegisterNetEvent('pm-autoshot:client:studioResult', function(ok, reason)
+    studioResult = { ok = ok, reason = reason }
+end)
 local pending = {}
 local uploadSequence = 0
 local finishResults = {}
@@ -103,6 +107,15 @@ RegisterCommand('shotanimframes', function(_, args)
             notice('Animation dictionary unavailable: ' .. dict)
             capturing = false; active = false; return
         end
+        studioResult = nil
+        TriggerEvent('pm-autoshot:client:openAnimationStudio')
+        local studioDeadline = GetGameTimer() + 15000
+        while studioResult == nil and GetGameTimer() < studioDeadline do Wait(50) end
+        if not studioResult or not studioResult.ok then
+            notice('Studio unavailable: ' .. tostring(studioResult and studioResult.reason or 'timeout'))
+            RemoveAnimDict(dict)
+            capturing = false; active = false; return
+        end
         local ped = PlayerPedId()
         ClearPedTasksImmediately(ped)
         TaskPlayAnim(ped, dict, clip, 8.0, 8.0, -1, 1, 0.0, false, false, false)
@@ -137,6 +150,7 @@ RegisterCommand('shotanimframes', function(_, args)
                 notice('WebP export failed: ' .. tostring(result and result.detail or 'timeout'))
             end
         end
+        TriggerEvent('pm-autoshot:client:closeAnimationStudio')
         capturing = false; active = false
         notice(('Captured %d/%d PNG frames for %s'):format(saved, count, name))
     end)
