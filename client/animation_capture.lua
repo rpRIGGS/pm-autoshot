@@ -331,16 +331,28 @@ RegisterCommand('shotanimbatch', function(_, args)
             return
         end
         local last = math.min(#catalog, first + count - 1)
+        -- Detect collisions across the entire catalog, including entries
+        -- outside this batch. A later run must never overwrite another emote.
         local outputOwners = {}
+        local collisions = {}
+        for i = 1, #catalog do
+            local item = catalog[i]
+            local filename = (item.category .. '_' .. item.key):gsub('[^%w_-]', '_'):sub(1, 96)
+            local identity = item.category .. ':' .. item.key
+            if outputOwners[filename] and outputOwners[filename] ~= identity then
+                collisions[filename] = true
+            else
+                outputOwners[filename] = identity
+            end
+        end
         for i = first, last do
             local item = catalog[i]
             local filename = (item.category .. '_' .. item.key):gsub('[^%w_-]', '_'):sub(1, 96)
-            if outputOwners[filename] then
-                notice(('Batch aborted: %s and %s share output filename %s'):format(outputOwners[filename], item.key, filename))
+            if collisions[filename] then
+                notice(('Batch refused ambiguous output filename %s (%s)'):format(filename, item.key))
                 batchActive = false
                 return
             end
-            outputOwners[filename] = item.key
         end
         for i = first, last do
             if not batchActive then break end
