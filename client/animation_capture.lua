@@ -301,6 +301,11 @@ RegisterCommand('shotanimbatch', function(_, args)
             batchActive = false
             return
         end
+        if first > #catalog then
+            notice(('Batch start %d exceeds catalog size %d'):format(first, #catalog))
+            batchActive = false
+            return
+        end
         local last = math.min(#catalog, first + count - 1)
         local outputOwners = {}
         for i = first, last do
