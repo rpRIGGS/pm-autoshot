@@ -357,7 +357,7 @@ RegisterCommand('shotanimbatch', function(_, args)
         local collisions = {}
         for i = 1, #catalog do
             local item = catalog[i]
-            local filename = (item.category .. '_' .. item.key):gsub('[^%w_-]', '_'):sub(1, 96)
+            local filename = (item.category .. '_' .. item.key):gsub('[^%w_-]', '_'):sub(1, 96):lower()
             local identity = item.category .. ':' .. item.key
             if outputOwners[filename] and outputOwners[filename] ~= identity then
                 collisions[filename] = true
@@ -368,7 +368,7 @@ RegisterCommand('shotanimbatch', function(_, args)
         for i = first, last do
             local item = catalog[i]
             local filename = (item.category .. '_' .. item.key):gsub('[^%w_-]', '_'):sub(1, 96)
-            if collisions[filename] then
+            if collisions[filename:lower()] then
                 notice(('Batch refused ambiguous output filename %s (%s)'):format(filename, item.key))
                 batchActive = false
                 return
