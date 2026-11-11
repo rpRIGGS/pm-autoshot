@@ -259,12 +259,31 @@ const MAX_ANIMATION_SESSIONS = 8;
 const ANIMATION_SESSION_TTL = 5 * 60 * 1000;
 
 function animationKey(src, name) { return String(src) + ':' + name; }
+function disposeAnimationSession(key) {
+    const session = animationSessions.get(key);
+    if (!session || session.encoding) return false;
+    animationSessions.delete(key);
+    // Remove only the staging directory owned by this session. Never touch
+    // finished WebP files in shots/animations/.
+    if (session.folder) {
+        try { fs.rmSync(session.folder, { recursive: true, force: true }); }
+        catch (e) { console.log('[PM AutoShot] Staging cleanup failed: ' + e.message); }
+    }
+    return true;
+}
 function cleanupAnimationSessions() {
     const now = Date.now();
     for (const [key, session] of animationSessions) {
-        if (!session.encoding && now - session.created > ANIMATION_SESSION_TTL) animationSessions.delete(key);
+        if (!session.encoding && now - session.created > ANIMATION_SESSION_TTL) disposeAnimationSession(key);
     }
 }
+setInterval(cleanupAnimationSessions, 60 * 1000);
+on('playerDropped', () => {
+    const prefix = String(source) + ':';
+    for (const key of animationSessions.keys()) {
+        if (key.startsWith(prefix)) disposeAnimationSession(key);
+    }
+});
 onNet('pm-autoshot:server:finishAnimation', async (payload) => {
     const src = source;
     const id = payload && payload.id;
@@ -299,7 +318,8 @@ onNet('pm-autoshot:server:finishAnimation', async (payload) => {
         const encoded = await require('./animated_webp').encodeAnimation(sharp, buffers, width, height, interval);
         fs.writeFileSync(tmpPath, encoded);
         fs.renameSync(tmpPath, outputPath);
-        animationSessions.delete(key);
+        session.encoding = false;
+        disposeAnimationSession(key);
         ok = true;
         detail = 'animations/' + name + '.webp';
         console.log('[PM AutoShot] Animated WebP saved: ' + detail);
@@ -347,7 +367,7 @@ onNet('pm-autoshot:server:animationFrame', (payload) => {
         if (!animationSessions.has(key)) {
             if (frame !== 1) throw new Error('capture session must begin with frame 1');
             if (animationSessions.size >= MAX_ANIMATION_SESSIONS) throw new Error('too many active sessions');
-            animationSessions.set(key, { created: Date.now(), frames: new Map() });
+            animationSessions.set(key, { created: Date.now(), frames: new Map(), folder: path.join(OUTPUT_DIR, 'animations', String(src), name) });
         }
         const session = animationSessions.get(key);
         if (session.encoding) throw new Error('session is encoding');
