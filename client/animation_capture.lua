@@ -350,6 +350,10 @@ RegisterCommand('shotanimbatch', function(_, args)
             captureAnimationFrames({ dict, clip, tostring(frames), tostring(interval), outputName })
             local startDeadline = GetGameTimer() + 3000
             while batchActive and not capturing and lastCaptureResult == nil and GetGameTimer() < startDeadline do Wait(50) end
+            if batchActive and not capturing and lastCaptureResult == nil then
+                notice('Batch capture did not start: ' .. entry.key)
+                break
+            end
             local endDeadline = GetGameTimer() + 120000
             while batchActive and capturing and GetGameTimer() < endDeadline do Wait(100) end
             if capturing then
