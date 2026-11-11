@@ -28,8 +28,10 @@ The NUI resolves each image by `data-emotetype:data-emoteid`.
 With `pm-autoshot`, `pm-emotes`, and `screenshot-basic` started,
 run `/shotanimdoctor` in the FiveM client. The console reports whether
 `sharp`, `pngjs`, both resources, the writable output directory, and
-the installed PM Emotes catalog are available. This is a dependency
-check, not proof of successful image capture.
+the installed PM Emotes catalog are available. The command now also
+encodes and decodes a real two-frame WebP on FXServer and reports
+`encoder-test=OK` only when the frames and timing survive. This validates
+the server encoder, not screenshot capture or NUI display.
 
 Next, capture one simple emote using
 `/shotanimbatch 1 1 8 200` (or select the desired catalog index after
