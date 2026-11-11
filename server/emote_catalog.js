@@ -24,9 +24,9 @@ function tableEnd(text, open) {
 function parseCatalog(source) {
     const result = [];
     for (const category of ['Emotes', 'Dances', 'Exits', 'PropEmotes']) {
-        const declaration = new RegExp('(?:RP|CustomDP)\\.' + category + '\\s*=\\s*\\{');
-        const found = declaration.exec(source);
-        if (!found) continue;
+        const declaration = new RegExp('(?:RP|CustomDP)\\.' + category + '\\s*=\\s*\\{', 'g');
+        let found;
+        while ((found = declaration.exec(source))) {
         const open = found.index + found[0].lastIndexOf('{');
         const end = tableEnd(source, open);
         if (end < 0) continue;
@@ -53,6 +53,8 @@ function parseCatalog(source) {
                     result.push({ key, category, dict, clip, native: false });
             }
             header.lastIndex = entryEnd + 1;
+        }
+        declaration.lastIndex = end + 1;
         }
     }
     return result;
