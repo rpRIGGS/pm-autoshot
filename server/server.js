@@ -300,6 +300,7 @@ onNet('pm-autoshot:server:finishAnimation', async (payload) => {
     const src = source;
     const id = payload && payload.id;
     let ok = false, detail = 'invalid request';
+    let encodingSession = null;
     try {
         if (!checkAce(src)) throw new Error('permission denied');
         if (!sharp || !PNG) throw new Error('sharp or pngjs unavailable on FXServer');
@@ -313,6 +314,7 @@ onNet('pm-autoshot:server:finishAnimation', async (payload) => {
         if (!session || session.frames.size !== frames) throw new Error('incomplete capture session');
         if (session.encoding) throw new Error('animation encoding already in progress');
         session.encoding = true;
+        encodingSession = session;
         const buffers = [];
         let width = 0, height = 0;
         for (let i = 1; i <= frames; i++) {
@@ -355,10 +357,13 @@ onNet('pm-autoshot:server:finishAnimation', async (payload) => {
         detail = e.message || String(e);
         console.log('[PM AutoShot] WebP encode failed: ' + detail);
         if (payload && typeof payload.name === 'string' && /^[a-zA-Z0-9_-]{1,96}$/.test(payload.name)) {
-            const failed = animationSessions.get(animationKey(src, payload.name));
-            if (failed) {
-                failed.encoding = false;
-                if (failed.cancelled) disposeAnimationSession(animationKey(src, payload.name));
+            const sessionKey = animationKey(src, payload.name);
+            const current = animationSessions.get(sessionKey);
+            // Only unwind the exact session owned by this encoder. An abort
+            // may have replaced it with a newer capture while we awaited sharp.
+            if (encodingSession && current === encodingSession) {
+                encodingSession.encoding = false;
+                disposeAnimationSession(sessionKey);
             }
             // An interrupted encoder must not leave an orphaned temporary WebP.
             const partial = path.join(OUTPUT_DIR, 'animations', payload.name + '.webp.tmp-' + String(src));
