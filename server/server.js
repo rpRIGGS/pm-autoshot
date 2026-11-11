@@ -32,6 +32,15 @@ const ACE_RESTRICTED = GetConvar('uz_autoshot_ace_restricted', 'false') === 'tru
 const ACE_COMMAND    = GetConvar('uz_autoshot_command', 'shotmaker');
 const ACE_NAME       = 'command.' + ACE_COMMAND;
 
+// Animation exports are intentionally restricted even when the legacy
+// clothing thumbnail tool runs without its optional ACE restriction.
+// Reuse the existing QBCore admin ACE rather than introducing new grants.
+function checkAnimationPermission(src) {
+    return src === 0 || IsPlayerAceAllowed(String(src), 'qbcore.admin') ||
+        IsPlayerAceAllowed(String(src), 'qbcore.god') ||
+        IsPlayerAceAllowed(String(src), ACE_NAME);
+}
+
 function checkAce(src) {
     if (!ACE_RESTRICTED) return true;
     return IsPlayerAceAllowed(src.toString(), ACE_NAME);
@@ -302,7 +311,7 @@ onNet('pm-autoshot:server:finishAnimation', async (payload) => {
     let ok = false, detail = 'invalid request';
     let encodingSession = null;
     try {
-        if (!checkAce(src)) throw new Error('permission denied');
+        if (!checkAnimationPermission(src)) throw new Error('permission denied');
         if (!sharp || !PNG) throw new Error('sharp or pngjs unavailable on FXServer');
         if (!payload || typeof payload !== 'object') throw new Error('invalid request');
         const { name, frames } = payload;
@@ -386,7 +395,7 @@ onNet('pm-autoshot:server:animationFrame', (payload) => {
     const id = payload && payload.id;
     let ok = false, detail = 'invalid frame';
     try {
-        if (!checkAce(src)) throw new Error('permission denied');
+        if (!checkAnimationPermission(src)) throw new Error('permission denied');
         if (!PNG) throw new Error('pngjs unavailable');
         if (!payload || typeof payload !== 'object') throw new Error('invalid payload');
         const name = payload.name;
@@ -443,7 +452,7 @@ onNet('pm-autoshot:server:animationFrame', (payload) => {
 // Lightweight runtime readiness check for the full preview pipeline.
 onNet('pm-autoshot:server:diagnoseAnimation', async () => {
     const src = source;
-    if (!checkAce(src)) return;
+    if (!checkAnimationPermission(src)) return;
     const results = {
         sharp: Boolean(sharp),
         pngjs: Boolean(PNG),
@@ -482,7 +491,7 @@ onNet('pm-autoshot:server:diagnoseAnimation', async () => {
 // Catalog is always loaded from the live PM Emotes installation, not a frozen list.
 onNet('pm-autoshot:server:requestCatalog', () => {
     const src = source;
-    if (!checkAce(src)) return;
+    if (!checkAnimationPermission(src)) return;
     try {
         const catalog = require('./emote_catalog').readCatalog('pm-emotes');
         emitNet('pm-autoshot:client:catalog', src, catalog);
@@ -507,7 +516,7 @@ onNet('uz_autoshot:server:processCapture', (payload) => {
 });
 
 function processCapture(src, payload) {
-    if (!checkAce(src)) {
+    if (!checkAnimationPermission(src)) {
         console.log('^1[uz_AutoShot]^0 Refused capture: player ' + src + ' lacks ' + ACE_NAME);
         return;
     }
@@ -616,14 +625,14 @@ function processCapture(src, payload) {
 onNet('uz_autoshot:server:ping', () => {
     const src = source;
     let reason = null;
-    if (!checkAce(src)) reason = 'You lack ' + ACE_NAME + ' on the server.';
+    if (!checkAnimationPermission(src)) reason = 'You lack ' + ACE_NAME + ' on the server.';
     else if (!PNG) reason = 'pngjs missing on server. Delete .yarn.installed and restart the server.';
     emitNet('uz_autoshot:client:pong', src, { ok: reason === null, reason: reason });
 });
 
 onNet('uz_autoshot:server:setBucket', (bucket) => {
     const src = source;
-    if (!checkAce(src)) {
+    if (!checkAnimationPermission(src)) {
         console.log('^1[uz_AutoShot]^0 Refused setBucket: player ' + src + ' lacks ' + ACE_NAME);
         return;
     }
@@ -633,7 +642,7 @@ onNet('uz_autoshot:server:setBucket', (bucket) => {
 
 onNet('uz_autoshot:server:resetBucket', () => {
     const src = source;
-    if (!checkAce(src)) {
+    if (!checkAnimationPermission(src)) {
         console.log('^1[uz_AutoShot]^0 Refused resetBucket: player ' + src + ' lacks ' + ACE_NAME);
         return;
     }
