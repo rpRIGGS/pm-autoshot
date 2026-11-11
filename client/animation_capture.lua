@@ -145,6 +145,11 @@ RegisterCommand('shotanimframes', function(_, args)
                 notice('Screenshot ' .. i .. ' failed: ' .. tostring(err))
                 break
             end
+            -- Bound client-side screenshot memory during long batch sessions.
+            if #image > 8 * 1024 * 1024 then
+                notice('Screenshot exceeds 8 MiB safety limit')
+                break
+            end
             sampled[i] = image
             if previousSample then actualIntervals[#actualIntervals + 1] = sampledAt - previousSample end
             previousSample = sampledAt
