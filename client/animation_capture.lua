@@ -63,7 +63,7 @@ RegisterCommand('shotanimstop', function()
 end, false)
 
 RegisterCommand('shotanim', function(_, args)
-    if active then notice('An animation is already running. Use /shotanimstop first.'); return end
+    if active or capturing then notice('An animation is already running. Use /shotanimstop first.'); return end
     local dict, clip = args[1], args[2]
     if not dict or not clip then
         notice('Usage: /shotanim <dictionary> <clip> [duration-ms] [flags]')
@@ -76,7 +76,10 @@ RegisterCommand('shotanim', function(_, args)
         RequestAnimDict(dict)
         local deadline = GetGameTimer() + 10000
         while not HasAnimDictLoaded(dict) and GetGameTimer() < deadline and active do Wait(50) end
-        if not active then return end
+        if not active then
+            RemoveAnimDict(dict)
+            return
+        end
         if not HasAnimDictLoaded(dict) then
             notice('Animation dictionary timed out: ' .. dict)
             active = false
@@ -122,7 +125,7 @@ RegisterCommand('shotanimframes', function(_, args)
         studioResult = nil
         TriggerEvent('pm-autoshot:client:openAnimationStudio')
         local studioDeadline = GetGameTimer() + 15000
-        while studioResult == nil and GetGameTimer() < studioDeadline do Wait(50) end
+        while active and studioResult == nil and GetGameTimer() < studioDeadline do Wait(50) end
         if not active or not studioResult or not studioResult.ok then
             notice('Studio unavailable: ' .. tostring(studioResult and studioResult.reason or 'cancelled or timeout'))
             TriggerEvent('pm-autoshot:client:closeAnimationStudio')
