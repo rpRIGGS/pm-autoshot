@@ -84,3 +84,11 @@ These are implementation checks, **not reasons to replace the agreed approach or
 - Individual screenshots are capped at 8 MiB before buffering; at the maximum 24-frame batch this still allows substantial temporary client memory, so memory usage and large-catalog throughput need testing.
 - The current encoder accepts one uniform average frame delay, not individual variable delays. Screenshot-basic capture latency can still produce uneven sampling, especially on slow clients.
 - **Not production-ready:** requires actual FiveM screenshot/basic test, sharp native-module compatibility check, complete emote-type coverage, and PM Emotes NUI asset integration.
+
+
+## Session consistency hardening
+
+- Server rejects out-of-order frame uploads and refuses to overwrite a session while its WebP encoder is running.
+- Encoding locks are released on errors, allowing recovery rather than leaving a permanently blocked capture name.
+- WebP frame delay now accepts measured sampling intervals down to 1 ms and up to 10 seconds; previous 100–1000 ms clamp could silently misrepresent screenshot capture timing.
+- Remaining validation: execute regression tests in checked-out repo, verify native Sharp installation on the actual FXServer runtime, and exercise capture/restoration in FiveM.
