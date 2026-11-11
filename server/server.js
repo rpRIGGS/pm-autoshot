@@ -261,7 +261,11 @@ const ANIMATION_SESSION_TTL = 5 * 60 * 1000;
 function animationKey(src, name) { return String(src) + ':' + name; }
 function disposeAnimationSession(key) {
     const session = animationSessions.get(key);
-    if (!session || session.encoding) return false;
+    if (!session) return false;
+    if (session.encoding) {
+        session.cancelled = true;
+        return false;
+    }
     animationSessions.delete(key);
     // Remove only the staging directory owned by this session. Never touch
     // finished WebP files in shots/animations/.
@@ -318,7 +322,7 @@ onNet('pm-autoshot:server:finishAnimation', async (payload) => {
         const encoded = await require('./animated_webp').encodeAnimation(sharp, buffers, width, height, interval);
         // Encoding yields to the event loop. A disconnect, abort or restart
         // can invalidate the session while the encoder is working.
-        if (animationSessions.get(key) !== session || !session.encoding)
+        if (animationSessions.get(key) !== session || !session.encoding || session.cancelled)
             throw new Error('animation capture was cancelled during encoding');
         fs.writeFileSync(tmpPath, encoded);
         fs.renameSync(tmpPath, outputPath);
@@ -332,7 +336,10 @@ onNet('pm-autoshot:server:finishAnimation', async (payload) => {
         console.log('[PM AutoShot] WebP encode failed: ' + detail);
         if (payload && typeof payload.name === 'string' && /^[a-zA-Z0-9_-]{1,96}$/.test(payload.name)) {
             const failed = animationSessions.get(animationKey(src, payload.name));
-            if (failed) failed.encoding = false;
+            if (failed) {
+                failed.encoding = false;
+                if (failed.cancelled) disposeAnimationSession(animationKey(src, payload.name));
+            }
             // An interrupted encoder must not leave an orphaned temporary WebP.
             const partial = path.join(OUTPUT_DIR, 'animations', payload.name + '.webp.tmp-' + String(src));
             try { if (fs.existsSync(partial)) fs.unlinkSync(partial); }
