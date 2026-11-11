@@ -323,7 +323,10 @@ RegisterCommand('shotanimbatch', function(_, args)
             local entry = catalog[i]
             notice(('Batch %d/%d: %s (%s)'):format(i, last, entry.key, entry.category))
             local outputName = (entry.category .. '_' .. entry.key):gsub('[^%w_-]', '_'):sub(1, 96)
-            local dict, clip = entry.native and 'native:pm-emotes' or entry.dict, entry.native and entry.key or entry.clip
+            -- Always use the installed PM Emotes player for catalog previews.
+            -- Even ordinary dictionary entries may have flags, offsets,
+            -- durations or other options that a bare TaskPlayAnim misses.
+            local dict, clip = 'native:pm-emotes', entry.key
             -- Invoke the capture function directly. Console commands split
             -- whitespace and cannot safely preserve all catalog emote IDs.
             captureAnimationFrames({ dict, clip, tostring(frames), tostring(interval), outputName })
@@ -340,7 +343,7 @@ RegisterCommand('shotanimbatch', function(_, args)
                 notice('Batch stopped at ' .. entry.key .. ': ' .. tostring(lastCaptureResult and lastCaptureResult.reason or 'no completion result'))
                 break
             end
-            Wait(entry.native and 2500 or 300)
+            Wait(2500)
         end
         batchActive = false
         notice('Batch run ended')
