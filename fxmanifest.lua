@@ -14,6 +14,7 @@ shared_scripts {
 
 client_scripts {
     'client/client.lua',
+    'client/animation_capture.lua',
 }
 
 server_scripts {
