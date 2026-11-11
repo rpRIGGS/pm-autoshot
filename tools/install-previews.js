@@ -26,11 +26,11 @@ function install(source, destination, { dryRun = false } = {}) {
       knownKeys.set(encoded, keys);
     }
   }
-  const files = fs.readdirSync(from).filter(name => /^(Emotes|Dances|Exits|PropEmotes)_[A-Za-z0-9_-]+\\.webp$/.test(name)).sort();
+  const files = fs.readdirSync(from).filter(name => /^(Emotes|Dances|Exits|PropEmotes)_[A-Za-z0-9_-]+\.webp$/.test(name)).sort();
   for (const filename of files) {
     const stat = fs.statSync(path.join(from, filename));
     if (!stat.isFile() || stat.size < 20 || stat.size > 32 * 1024 * 1024) continue;
-    const match = /^(Emotes|Dances|Exits|PropEmotes)_(.+)\\.webp$/.exec(filename);
+    const match = /^(Emotes|Dances|Exits|PropEmotes)_(.+)\.webp$/.exec(filename);
     const keys = knownKeys.get(filename);
     // Ambiguous sanitized names must not silently bind the wrong animation.
     if (keys && keys.length > 1) throw new Error('Ambiguous preview filename: ' + filename + ' (' + keys.join(', ') + ')');
