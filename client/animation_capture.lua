@@ -156,10 +156,11 @@ local function captureAnimationFrames(args)
         local studioDeadline = GetGameTimer() + 15000
         while active and studioResult == nil and GetGameTimer() < studioDeadline do Wait(50) end
         if not active or not studioResult or not studioResult.ok then
-            notice('Studio unavailable: ' .. tostring(studioResult and studioResult.reason or 'cancelled or timeout'))
+            local failure = tostring(studioResult and studioResult.reason or 'cancelled or timeout')
+            notice('Studio unavailable: ' .. failure)
             TriggerEvent('pm-autoshot:client:closeAnimationStudio')
             if not native then RemoveAnimDict(dict) end
-            lastCaptureResult = { ok = false, name = name, reason = 'studio unavailable or cancelled' }
+            lastCaptureResult = { ok = false, name = name, reason = 'studio unavailable: ' .. failure }
             capturing = false; active = false; return
         end
         local ped = PlayerPedId()
