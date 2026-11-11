@@ -68,3 +68,11 @@ These are implementation checks, **not reasons to replace the agreed approach or
 - **Blocker to verify before claiming functional WebP:** native `sharp` availability in FXServer/yarn and actual multi-page encoding. No runtime validation has been performed. If native module fails, replace with a tested FXServer-compatible encoder rather than treating PNG frames as the final deliverable.
 - **Remaining:** actual PM Emotes catalog ingestion, batch scheduling/recovery, emote-type-specific scenarios/props, preview UI handoff, end-to-end test.
 - Existing clothing, vehicle, object, and other AutoShot capture commands must remain operational.
+
+
+## Encoder validation checkpoint
+
+- Locally exercised the animated RIFF WebP assembly with Node.js 22 and Sharp using three synthetic 24×24 RGBA frames. Sharp successfully decoded the result as 3 frames, page height 24, 160 ms per frame, alpha enabled, infinite loop. This was a local algorithm check, **not** an FXServer integration test.
+- Added `npm run test:webp` for repeatable regression validation. The committed regression test still needs to be run from a checked-out repository with dependencies installed.
+- Published WebP files are now written to a temporary path and renamed on success to reduce the chance of incomplete output being consumed by the UI.
+- **Important timing caveat:** the current capture loop waits for each screenshot upload acknowledgement before starting the next screenshot. If processing takes longer than the requested interval, actual sampled motion can be slower than the declared WebP frame delay. This must be corrected before claiming faithful animation timing.
