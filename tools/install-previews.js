@@ -12,11 +12,11 @@ function install(source, destination, { dryRun = false } = {}) {
   if (!fs.existsSync(from)) throw new Error('Missing capture directory: ' + from);
   if (!fs.existsSync(path.join(destination, 'fxmanifest.lua'))) throw new Error('Destination is not a FiveM resource');
   if (!fs.existsSync(path.join(destination, 'client', 'NUI', 'index.html'))) throw new Error('Destination is not PM Emotes NUI');
-  const files = fs.readdirSync(from).filter(name => /^(Emotes|Dances|Exits)_[A-Za-z0-9_-]+\.webp$/.test(name)).sort();
+  const files = fs.readdirSync(from).filter(name => /^(Emotes|Dances|Exits|PropEmotes)_[A-Za-z0-9_-]+\.webp$/.test(name)).sort();
   for (const filename of files) {
     const stat = fs.statSync(path.join(from, filename));
     if (!stat.isFile() || stat.size < 20 || stat.size > 32 * 1024 * 1024) continue;
-    const match = /^(Emotes|Dances|Exits)_(.+)\.webp$/.exec(filename);
+    const match = /^(Emotes|Dances|Exits|PropEmotes)_(.+)\.webp$/.exec(filename);
     manifest[match[1] + ':' + match[2]] = 'previews/' + filename;
     if (!dryRun) {
       fs.mkdirSync(to, { recursive: true });
