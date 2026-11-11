@@ -30,10 +30,10 @@ function install(source, destination, { dryRun = false } = {}) {
     const fxPath = path.join(destination, 'fxmanifest.lua');
     const fx = fs.readFileSync(fxPath, 'utf8');
     if (!fx.includes("'client/NUI/previews/*'")) {
-      const filesBlock = /files\\s*\\{([\\s\\S]*?)\\}/m;
+      const filesBlock = /files\s*\{([\s\S]*?)\}/m;
       if (!filesBlock.test(fx)) throw new Error('PM Emotes manifest has no files block');
       const updated = fx.replace(filesBlock, (block, body) =>
-        block.replace(body, body + "\\n    'client/NUI/previews/*',"));
+        block.replace(body, body + "\n    'client/NUI/previews/*',"));
       fs.writeFileSync(fxPath, updated);
     }
   }
