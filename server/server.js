@@ -316,6 +316,10 @@ onNet('pm-autoshot:server:finishAnimation', async (payload) => {
         const tmpPath = outputPath + '.tmp-' + String(src);
         if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
         const encoded = await require('./animated_webp').encodeAnimation(sharp, buffers, width, height, interval);
+        // Encoding yields to the event loop. A disconnect, abort or restart
+        // can invalidate the session while the encoder is working.
+        if (animationSessions.get(key) !== session || !session.encoding)
+            throw new Error('animation capture was cancelled during encoding');
         fs.writeFileSync(tmpPath, encoded);
         fs.renameSync(tmpPath, outputPath);
         session.encoding = false;
