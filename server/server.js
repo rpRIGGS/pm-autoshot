@@ -249,6 +249,65 @@ function resizePNG(src, targetW, targetH) {
 }
 
 
+
+let sharp = null;
+try { sharp = require('sharp'); }
+catch (e) { console.log('[PM AutoShot] Animated WebP encoder unavailable: ' + e.message); }
+
+const animationSessions = new Map();
+const MAX_ANIMATION_SESSIONS = 8;
+const ANIMATION_SESSION_TTL = 5 * 60 * 1000;
+
+function animationKey(src, name) { return String(src) + ':' + name; }
+function cleanupAnimationSessions() {
+    const now = Date.now();
+    for (const [key, session] of animationSessions) {
+        if (now - session.created > ANIMATION_SESSION_TTL) animationSessions.delete(key);
+    }
+}
+onNet('pm-autoshot:server:finishAnimation', async (payload) => {
+    const src = source;
+    const id = payload && payload.id;
+    let ok = false, detail = 'invalid request';
+    try {
+        if (!checkAce(src)) throw new Error('permission denied');
+        if (!sharp || !PNG) throw new Error('sharp or pngjs unavailable on FXServer');
+        if (!payload || typeof payload !== 'object') throw new Error('invalid request');
+        const { name, frames } = payload;
+        if (typeof name !== 'string' || !/^[a-zA-Z0-9_-]{1,96}$/.test(name)) throw new Error('invalid animation name');
+        if (!Number.isInteger(frames) || frames < 2 || frames > 24) throw new Error('invalid frame count');
+        const interval = Math.max(100, Math.min(1000, parseInt(payload.interval, 10) || 200));
+        const key = animationKey(src, name);
+        const session = animationSessions.get(key);
+        if (!session || session.frames.size !== frames) throw new Error('incomplete capture session');
+        const buffers = [];
+        let width = 0, height = 0;
+        for (let i = 1; i <= frames; i++) {
+            const frame = session.frames.get(i);
+            if (!frame) throw new Error('missing frame ' + i);
+            const png = PNG.sync.read(fs.readFileSync(frame));
+            if (i === 1) { width = png.width; height = png.height; }
+            if (png.width !== width || png.height !== height) throw new Error('frame dimensions mismatch');
+            buffers.push(png.data);
+        }
+        if (width * height * frames > 1024 * 1024 * 24) throw new Error('animation pixel budget exceeded');
+        const stacked = Buffer.concat(buffers);
+        const outputPath = path.join(OUTPUT_DIR, 'animations', name + '.webp');
+        await sharp(stacked, {
+            raw: { width, height: height * frames, channels: 4 },
+            pages: frames, pageHeight: height
+        }).webp({ loop: 0, delay: Array(frames).fill(interval), effort: 4 }).toFile(outputPath);
+        animationSessions.delete(key);
+        ok = true;
+        detail = 'animations/' + name + '.webp';
+        console.log('[PM AutoShot] Animated WebP saved: ' + detail);
+    } catch (e) {
+        detail = e.message || String(e);
+        console.log('[PM AutoShot] WebP encode failed: ' + detail);
+    }
+    if (id !== undefined) emitNet('pm-autoshot:client:animationFinished', src, id, ok, detail);
+});
+
 const MAX_ANIM_FRAME_BYTES = 12 * 1024 * 1024;
 onNet('pm-autoshot:server:animationFrame', (payload) => {
     const src = source;
@@ -276,6 +335,13 @@ onNet('pm-autoshot:server:animationFrame', (payload) => {
         fs.mkdirSync(folder, { recursive: true });
         const filename = String(frame).padStart(3, '0') + '.png';
         fs.writeFileSync(path.join(folder, filename), PNG.sync.write(png, { colorType: 6 }));
+        cleanupAnimationSessions();
+        const key = animationKey(src, name);
+        if (!animationSessions.has(key)) {
+            if (animationSessions.size >= MAX_ANIMATION_SESSIONS) throw new Error('too many active sessions');
+            animationSessions.set(key, { created: Date.now(), frames: new Map() });
+        }
+        animationSessions.get(key).frames.set(frame, path.join(folder, filename));
         ok = true;
         detail = 'animations/' + name + '/' + filename;
     } catch (e) {
