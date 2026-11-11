@@ -12,17 +12,36 @@ function install(source, destination, { dryRun = false } = {}) {
   if (!fs.existsSync(from)) throw new Error('Missing capture directory: ' + from);
   if (!fs.existsSync(path.join(destination, 'fxmanifest.lua'))) throw new Error('Destination is not a FiveM resource');
   if (!fs.existsSync(path.join(destination, 'client', 'NUI', 'index.html'))) throw new Error('Destination is not PM Emotes NUI');
-  const files = fs.readdirSync(from).filter(name => /^(Emotes|Dances|Exits|PropEmotes)_[A-Za-z0-9_-]+\.webp$/.test(name)).sort();
+  // Recover original (possibly spaced/punctuated) emote keys from the
+  // installed PM Emotes catalog; capture filenames contain sanitized keys.
+  const knownKeys = new Map();
+  const { parseCatalog } = require('../server/emote_catalog');
+  for (const relative of ['client/AnimationList.lua', 'client/AnimationListCustom.lua']) {
+    const file = path.join(destination, relative);
+    if (!fs.existsSync(file)) continue;
+    for (const entry of parseCatalog(fs.readFileSync(file, 'utf8'))) {
+      const encoded = (entry.category + '_' + entry.key).replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 96) + '.webp';
+      const keys = knownKeys.get(encoded) || [];
+      keys.push(entry.category + ':' + entry.key);
+      knownKeys.set(encoded, keys);
+    }
+  }
+  const files = fs.readdirSync(from).filter(name => /^(Emotes|Dances|Exits|PropEmotes)_[A-Za-z0-9_-]+\\.webp$/.test(name)).sort();
   for (const filename of files) {
     const stat = fs.statSync(path.join(from, filename));
     if (!stat.isFile() || stat.size < 20 || stat.size > 32 * 1024 * 1024) continue;
-    const match = /^(Emotes|Dances|Exits|PropEmotes)_(.+)\.webp$/.exec(filename);
-    manifest[match[1] + ':' + match[2]] = 'previews/' + filename;
+    const match = /^(Emotes|Dances|Exits|PropEmotes)_(.+)\\.webp$/.exec(filename);
+    const keys = knownKeys.get(filename);
+    // Ambiguous sanitized names must not silently bind the wrong animation.
+    if (keys && keys.length > 1) throw new Error('Ambiguous preview filename: ' + filename + ' (' + keys.join(', ') + ')');
+    const key = keys ? keys[0] : match[1] + ':' + match[2];
+    manifest[key] = 'previews/' + filename;
     if (!dryRun) {
       fs.mkdirSync(to, { recursive: true });
       fs.copyFileSync(path.join(from, filename), path.join(to, filename));
     }
   }
+
   if (!dryRun) {
     fs.mkdirSync(to, { recursive: true });
     fs.writeFileSync(path.join(to, 'manifest.json'), JSON.stringify({ version: 1, entries: manifest }, null, 2) + '\n');
