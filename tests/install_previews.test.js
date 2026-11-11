@@ -61,6 +61,18 @@ RP.PropEmotes = {
   });
   const manifest = JSON.parse(fs.readFileSync(path.join(target, 'client', 'NUI', 'previews', 'manifest.json'), 'utf8'));
   assert.deepEqual(manifest.entries, result.entries);
+  // Installing another capture batch must retain previews from the first.
+  for (const filename of fs.readdirSync(shots)) {
+    if (filename !== 'PropEmotes_coffee.webp') fs.unlinkSync(path.join(shots, filename));
+  }
+  const secondBatch = install(source, target);
+  assert.equal(secondBatch.count, 4);
+  assert.equal(secondBatch.entries['Emotes:wave'], 'previews/Emotes_wave.webp');
+  assert.equal(secondBatch.entries['PropEmotes:coffee'], 'previews/PropEmotes_coffee.webp');
+  // Restore fixtures for subsequent collision and corruption checks.
+  for (const filename of ['Emotes_wave.webp', 'Dances_wave.webp', 'Emotes_wave_hello.webp']) {
+    fs.writeFileSync(path.join(shots, filename), fakeWebP());
+  }
   const fx = fs.readFileSync(path.join(target, 'fxmanifest.lua'), 'utf8');
   assert.ok(fx.includes("'client/NUI/previews/*'"));
   install(source, target);
