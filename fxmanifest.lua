@@ -2,11 +2,11 @@ fx_version 'cerulean'
 game 'gta5'
 lua54 'yes'
 
-name 'uz_AutoShot'
-description 'Clothing Thumbnail Generator & Browser for FiveM'
+name 'PM AutoShot'
+description 'PowerMoves RP AutoShot studio and animation preview capture'
 author 'UZ'
 version '2.3.0'
-repository 'https://github.com/uz-scripts/uz_AutoShot'
+repository 'https://github.com/rpRIGGS/pm-autoshot'
 
 shared_scripts {
     'Customize.lua',
