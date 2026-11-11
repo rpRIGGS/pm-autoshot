@@ -334,6 +334,12 @@ onNet('pm-autoshot:server:finishAnimation', async (payload) => {
     if (id !== undefined) emitNet('pm-autoshot:client:animationFinished', src, id, ok, detail);
 });
 
+onNet('pm-autoshot:server:abortAnimation', (name) => {
+    const src = source;
+    if (!checkAce(src) || typeof name !== 'string' || !/^[a-zA-Z0-9_-]{1,96}$/.test(name)) return;
+    disposeAnimationSession(animationKey(src, name));
+});
+
 const MAX_ANIM_FRAME_BYTES = 12 * 1024 * 1024;
 onNet('pm-autoshot:server:animationFrame', (payload) => {
     const src = source;
@@ -362,7 +368,7 @@ onNet('pm-autoshot:server:animationFrame', (payload) => {
         if (frame === 1) {
             const prior = animationSessions.get(key);
             if (prior && prior.encoding) throw new Error('prior animation still encoding');
-            animationSessions.delete(key);
+            disposeAnimationSession(key);
         }
         if (!animationSessions.has(key)) {
             if (frame !== 1) throw new Error('capture session must begin with frame 1');
