@@ -58,3 +58,13 @@ These are implementation checks, **not reasons to replace the agreed approach or
 - **2026-11-11:** Fork README updated and original documentation retained.
 - **2026-11-11:** Added development-reference planning, scope, implementation checklist, and decision log.
 - **2026-11-11:** Audited source and committed initial fork naming and NUI URL compatibility updates.
+
+
+## Animation capture implementation checkpoint (2026-11-11)
+
+- Added `client/animation_capture.lua` with `/shotanim <dict> <clip>`, `/shotanimstop`, and `/shotanimframes <dict> <clip> [2-24 frames] [100-1000 ms interval]`.
+- Frame capture now opens the original AutoShot studio via `pm-autoshot:client:openAnimationStudio`, reusing its camera, routing bucket, chroma environment, and appearance restoration. This is code integration, not a FiveM-tested claim.
+- Server validates and stores intermediate alpha PNGs under `shots/animations/<name>/` and attempts to encode `shots/animations/<name>.webp` using `sharp`.
+- **Blocker to verify before claiming functional WebP:** native `sharp` availability in FXServer/yarn and actual multi-page encoding. No runtime validation has been performed. If native module fails, replace with a tested FXServer-compatible encoder rather than treating PNG frames as the final deliverable.
+- **Remaining:** actual PM Emotes catalog ingestion, batch scheduling/recovery, emote-type-specific scenarios/props, preview UI handoff, end-to-end test.
+- Existing clothing, vehicle, object, and other AutoShot capture commands must remain operational.
