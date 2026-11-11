@@ -385,7 +385,7 @@ onNet('pm-autoshot:server:finishAnimation', async (payload) => {
 
 onNet('pm-autoshot:server:abortAnimation', (name) => {
     const src = source;
-    if (!checkAce(src) || typeof name !== 'string' || !/^[a-zA-Z0-9_-]{1,96}$/.test(name)) return;
+    if (!checkAnimationPermission(src) || typeof name !== 'string' || !/^[a-zA-Z0-9_-]{1,96}$/.test(name)) return;
     disposeAnimationSession(animationKey(src, name));
 });
 
