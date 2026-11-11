@@ -10,6 +10,7 @@ local pending = {}
 local uploadSequence = 0
 local finishResults = {}
 local lastCaptureResult = nil
+local activeNative = false
 RegisterNetEvent('pm-autoshot:client:animationFinished', function(id, ok, detail)
     if finishResults[id] then finishResults[id] = { done = true, ok = ok, detail = detail } end
 end)
@@ -57,7 +58,12 @@ end
 
 RegisterCommand('shotanimstop', function()
     active = false
-    ClearPedTasksImmediately(PlayerPedId())
+    if activeNative and GetResourceState('pm-emotes') == 'started' then
+        pcall(function() exports['pm-emotes']:EmoteCancel() end)
+    else
+        ClearPedTasksImmediately(PlayerPedId())
+    end
+    activeNative = false
     if capturing then TriggerEvent('pm-autoshot:client:closeAnimationStudio') end
     notice('Animation playback stopped')
 end, false)
@@ -142,6 +148,7 @@ RegisterCommand('shotanimframes', function(_, args)
                 TriggerEvent('pm-autoshot:client:closeAnimationStudio')
                 capturing = false; active = false; return
             end
+            activeNative = true
             local ok, err = pcall(function()
                 TriggerEvent('animations:client:EmoteCommandStart', { clip })
             end)
@@ -171,6 +178,7 @@ RegisterCommand('shotanimframes', function(_, args)
             if not started then
                 lastCaptureResult = { ok = false, name = name, reason = 'PM Emotes did not start the requested emote' }
                 pcall(function() exports['pm-emotes']:EmoteCancel() end)
+                activeNative = false
                 TriggerEvent('pm-autoshot:client:closeAnimationStudio')
                 capturing = false; active = false
                 return
@@ -204,6 +212,7 @@ RegisterCommand('shotanimframes', function(_, args)
         -- Stop the animation before uploading; uploads can take several seconds.
         if native then
             pcall(function() exports['pm-emotes']:EmoteCancel() end)
+            activeNative = false
         else
             ClearPedTasks(ped)
             RemoveAnimDict(dict)
