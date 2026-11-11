@@ -1,6 +1,40 @@
 -- PM AutoShot animation capture prototype. Standalone test command.
 -- The production batch pipeline will reuse the existing AutoShot studio camera.
 local active = false
+local capturing = false
+local pending = {}
+local uploadSequence = 0
+
+RegisterNetEvent('pm-autoshot:client:frameSaved', function(id, ok, detail)
+    if pending[id] then pending[id] = { done = true, ok = ok, detail = detail } end
+end)
+
+local function captureFrame(name, frameIndex)
+    local done, image = false, nil
+    exports['screenshot-basic']:requestScreenshot({ encoding = 'png' }, function(data)
+        image = data
+        done = true
+    end)
+    local deadline = GetGameTimer() + 12000
+    while not done and active and GetGameTimer() < deadline do Wait(25) end
+    if not active or not done or type(image) ~= 'string' or image == '' then return false, 'screenshot timed out' end
+    uploadSequence = uploadSequence + 1
+    local id = uploadSequence
+    pending[id] = { done = false }
+    TriggerLatentServerEvent('pm-autoshot:server:animationFrame', 8000000, {
+        id = id, name = name, frame = frameIndex, imageData = image,
+        chromaKey = Customize.ChromaKeyColor or 'green',
+        transparent = Customize.TransparentBg == true,
+        width = Customize.ScreenshotWidth or 256,
+        height = Customize.ScreenshotHeight or 256
+    })
+    deadline = GetGameTimer() + 20000
+    while pending[id] and not pending[id].done and active and GetGameTimer() < deadline do Wait(25) end
+    local result = pending[id]
+    pending[id] = nil
+    if not result or not result.done then return false, 'upload timed out' end
+    return result.ok, result.detail
+end
 local function notice(message)
     print('[PM AutoShot] ' .. message)
 end
@@ -40,5 +74,51 @@ RegisterCommand('shotanim', function(_, args)
         if active then ClearPedTasks(ped) end
         RemoveAnimDict(dict)
         active = false
+    end)
+end, false)
+
+-- First capture pipeline: playback + timed PNG frame uploads.
+-- Frames are written into shots/animations/<name>/ as an intermediate sequence.
+RegisterCommand('shotanimframes', function(_, args)
+    if active or capturing then notice('Capture already in progress'); return end
+    local dict, clip = args[1], args[2]
+    if not dict or not clip then
+        notice('Usage: /shotanimframes <dictionary> <clip> [frames 2-24] [interval-ms 100-1000]')
+        return
+    end
+    local count = math.floor(math.min(24, math.max(2, tonumber(args[3]) or 8)))
+    local interval = math.floor(math.min(1000, math.max(100, tonumber(args[4]) or 200)))
+    local name = (dict .. '_' .. clip):gsub('[^%w_-]', '_'):sub(1, 96)
+    capturing = true
+    active = true
+    CreateThread(function()
+        RequestAnimDict(dict)
+        local deadline = GetGameTimer() + 10000
+        while active and not HasAnimDictLoaded(dict) and GetGameTimer() < deadline do Wait(50) end
+        if not active or not HasAnimDictLoaded(dict) then
+            notice('Animation dictionary unavailable: ' .. dict)
+            capturing = false; active = false; return
+        end
+        local ped = PlayerPedId()
+        ClearPedTasksImmediately(ped)
+        TaskPlayAnim(ped, dict, clip, 8.0, 8.0, -1, 1, 0.0, false, false, false)
+        Wait(250)
+        local saved = 0
+        for i = 1, count do
+            if not active then break end
+            local started = GetGameTimer()
+            local ok, detail = captureFrame(name, i)
+            if not ok then
+                notice('Frame ' .. i .. ' failed: ' .. tostring(detail))
+                break
+            end
+            saved = saved + 1
+            local remaining = interval - (GetGameTimer() - started)
+            if remaining > 0 then Wait(remaining) end
+        end
+        ClearPedTasks(ped)
+        RemoveAnimDict(dict)
+        capturing = false; active = false
+        notice(('Captured %d/%d PNG frames for %s'):format(saved, count, name))
     end)
 end, false)
