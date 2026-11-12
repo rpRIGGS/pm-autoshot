@@ -24,4 +24,5 @@ assert.match(client, /TriggerServerEvent\('uz_autoshot:server:resetBucket'\)/);
 assert.match(server, /onNet\('uz_autoshot:server:ping',[\s\S]*?checkAce\(src\)/);
 assert.match(server, /onNet\('pm-autoshot:server:pingAnimation',[\s\S]*?checkAnimationPermission\(src\)/);
 assert.match(client, /if \(!ServerReady\(true\)\) then/);
+assert.match(client, /if not animationStudioActive then ClearPedTasksImmediately/);
 console.log('PASS: animation studio integration guardrails');
