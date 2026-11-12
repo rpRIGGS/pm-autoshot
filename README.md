@@ -14,7 +14,7 @@ Add an **animation/emote capture mode** to the existing AutoShot tool, without r
 - Batch commands, stop/abort handling, preview installer with dry-run and rollback safeguards.
 - Server doctor command with a real WebP encode/decode probe and automated Node regression tests.
 
-**Validation status:** Automated Node tests pass, but a live FiveM screenshot-to-WebP-to-NUI capture has **not** been verified. This is not a production-readiness claim. The actual FXServer Node runtime, screenshot-basic, routing bucket restoration, animations with props and NUI playback require a development-server smoke test. See [deployment and first-run checks](development-reference/PREVIEW-DEPLOYMENT.md).
+**Validation status (2026-11-12):** All five offline development tasks are complete: package audit, runtime source audit, cross-resource preview contract, failure-case regression testing, and release handoff. The full Node 22 test suite passed in GitHub Actions [run 43160738776](https://github.com/rpRIGGS/pm-autoshot/actions/runs/43160738776). A live FiveM screenshot-to-WebP-to-NUI capture has **not** been verified. This is not a production-readiness claim. The actual FXServer Node runtime, screenshot-basic, routing bucket restoration, animations with props and NUI playback require a development-server smoke test. See [deployment and first-run checks](development-reference/PREVIEW-DEPLOYMENT.md).
 
 ### Resource boundaries
 
