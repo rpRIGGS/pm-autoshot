@@ -81,3 +81,5 @@ assert.match(capture, /activeCaptureName = nil\s*notice\(\('Captured/);
 assert.match(server, /if \(encodingSession && current === encodingSession\)/);
 assert.match(server, /if \(reservedPreviewName !== null\) activePreviewEncodes\.delete\(reservedPreviewName\)/);
 assert.match(server, /if \(animationSessions\.get\(key\) !== session \|\| !session\.encoding \|\| session\.cancelled\)/);
+
+assert.match(server, /const activePreviewEncodes = new Set\(\)/);
