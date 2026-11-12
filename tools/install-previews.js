@@ -99,8 +99,14 @@ function install(source, destination, { dryRun = false } = {}) {
       if (Object.hasOwn(manifest, key) || !catalogIdentities.has(key)) continue;
       if (typeof asset !== 'string' || !/^previews\/[A-Za-z0-9_-]+\.webp$/.test(asset))
         throw new Error('Unsafe existing preview manifest entry: ' + key);
-      if (fs.existsSync(path.join(to, path.basename(asset))))
+      const installed = path.join(to, path.basename(asset));
+      if (fs.existsSync(installed)) {
+        const installedStat = fs.lstatSync(installed);
+        if (!installedStat.isFile() || installedStat.size < 64 ||
+            !validateAnimatedWebP(installed, installedStat))
+          throw new Error('Previously installed preview is invalid: ' + key);
         manifest[key] = asset;
+      }
     }
   }
   const fxPath = path.join(destination, 'fxmanifest.lua');
