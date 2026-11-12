@@ -691,6 +691,28 @@ onNet('uz_autoshot:server:setBucket', (bucket) => {
     SetPlayerRoutingBucket(String(src), studioBucket);
 });
 
+// Animation studio waits for this acknowledgement before teleporting.
+onNet('pm-autoshot:server:enterStudioBucket', (requestId) => {
+    const src = source;
+    let ok = false, reason = 'studio access denied';
+    try {
+        if (!Number.isSafeInteger(requestId) || requestId < 1) throw new Error('invalid studio request');
+        if (!checkAnimationPermission(src)) throw new Error('animation studio requires administrator access');
+        const studioBucket = Number(GetConvar('uz_autoshot_studio_bucket', '999'));
+        if (!Number.isSafeInteger(studioBucket) || studioBucket < 0) throw new Error('invalid configured studio bucket');
+        if (!originalCaptureBuckets.has(src))
+            originalCaptureBuckets.set(src, GetPlayerRoutingBucket(String(src)));
+        SetPlayerRoutingBucket(String(src), studioBucket);
+        if (GetPlayerRoutingBucket(String(src)) !== studioBucket) throw new Error('routing bucket change was not applied');
+        ok = true;
+        reason = null;
+    } catch (error) {
+        reason = error.message || String(error);
+    }
+    if (Number.isSafeInteger(requestId) && requestId > 0)
+        emitNet('pm-autoshot:client:studioBucketResult', src, requestId, ok, reason);
+});
+
 onNet('uz_autoshot:server:resetBucket', () => {
     const src = source;
     if (!checkAnimationPermission(src)) return;
