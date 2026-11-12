@@ -356,7 +356,13 @@ onNet('pm-autoshot:server:finishAnimation', async (payload) => {
         // can invalidate the session while the encoder is working.
         if (animationSessions.get(key) !== session || !session.encoding || session.cancelled)
             throw new Error('animation capture was cancelled during encoding');
+        // A capture from another admin must not silently overwrite a
+        // previously completed preview with the same catalog identifier.
+        if (fs.existsSync(outputPath))
+            throw new Error('preview already exists: ' + name + ' (remove it explicitly to recapture)');
         fs.writeFileSync(tmpPath, encoded);
+        if (fs.existsSync(outputPath))
+            throw new Error('preview already exists: ' + name + ' (concurrent capture)');
         fs.renameSync(tmpPath, outputPath);
         session.encoding = false;
         disposeAnimationSession(key);
