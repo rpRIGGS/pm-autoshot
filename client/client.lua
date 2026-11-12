@@ -501,9 +501,9 @@ RegisterNetEvent('uz_autoshot:client:pong', function(status) serverStatus = stat
 -- A broken server side (server.js failed to load, pngjs missing) otherwise only
 -- shows up as every upload timing out one by one: a capture that looks frozen
 -- and an empty shots/ folder. Ask once before entering the studio instead.
-local function ServerReady()
+local function ServerReady(animation)
     serverStatus = nil
-    TriggerServerEvent('uz_autoshot:server:ping')
+    TriggerServerEvent(animation and 'pm-autoshot:server:pingAnimation' or 'uz_autoshot:server:ping')
     local timeout = GetGameTimer() + 5000
     while serverStatus == nil and GetGameTimer() < timeout do Wait(50) end
 
@@ -2352,7 +2352,7 @@ RegisterNetEvent('pm-autoshot:client:openAnimationStudio', function()
         TriggerEvent('pm-autoshot:client:studioResult', false, 'AutoShot studio is busy')
         return
     end
-    if not ServerReady() then
+    if not ServerReady(true) then
         TriggerEvent('pm-autoshot:client:studioResult', false, 'AutoShot server unavailable')
         return
     end
