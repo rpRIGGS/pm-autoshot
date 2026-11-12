@@ -41,4 +41,5 @@ assert.match(client, /studio routing bucket timed out/);
 assert.match(capture, /local wasPlaying = active or capturing or activeNative/);
 assert.match(capture, /elseif wasPlaying then[\s\S]*?ClearPedTasksImmediately/);
 assert.match(client, /AddEventHandler\('onClientResourceStop',[\s\S]*?DestroyOrbitCamera\(\)[\s\S]*?CleanupCapture\(\)/);
+assert.match(client, /resource ~= GetCurrentResourceName\(\) or not animationStudioActive/);
 console.log('PASS: animation studio integration guardrails');
