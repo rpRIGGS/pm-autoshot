@@ -634,23 +634,26 @@ onNet('uz_autoshot:server:ping', () => {
     emitNet('uz_autoshot:client:pong', src, { ok: reason === null, reason: reason });
 });
 
+const originalCaptureBuckets = new Map();
 onNet('uz_autoshot:server:setBucket', (bucket) => {
     const src = source;
-    if (!checkAnimationPermission(src)) {
-        console.log('^1[uz_AutoShot]^0 Refused setBucket: player ' + src + ' lacks ' + ACE_NAME);
+    if (!checkAnimationPermission(src)) return;
+    const studioBucket = Number(GetConvar('uz_autoshot_studio_bucket', '991'));
+    // Only the configured studio bucket is permitted; clients must not
+    // choose arbitrary routing buckets via this server event.
+    if (!Number.isSafeInteger(bucket) || bucket !== studioBucket) {
+        console.log('[PM AutoShot] Refused invalid studio bucket from player ' + src);
         return;
     }
-    SetPlayerRoutingBucket(src.toString(), bucket);
-    console.log('^2[uz_AutoShot]^0 Player ' + src + ' -> bucket ' + bucket);
+    if (!originalCaptureBuckets.has(src))
+        originalCaptureBuckets.set(src, GetPlayerRoutingBucket(String(src)));
+    SetPlayerRoutingBucket(String(src), studioBucket);
 });
 
 onNet('uz_autoshot:server:resetBucket', () => {
     const src = source;
-    if (!checkAnimationPermission(src)) {
-        console.log('^1[uz_AutoShot]^0 Refused resetBucket: player ' + src + ' lacks ' + ACE_NAME);
-        return;
-    }
-    SetPlayerRoutingBucket(src.toString(), 0);
-    console.log('^2[uz_AutoShot]^0 Player ' + src + ' -> bucket 0');
+    if (!checkAnimationPermission(src)) return;
+    if (!originalCaptureBuckets.has(src)) return;
+    SetPlayerRoutingBucket(String(src), originalCaptureBuckets.get(src));
+    originalCaptureBuckets.delete(src);
 });
-
