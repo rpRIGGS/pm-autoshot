@@ -241,9 +241,11 @@ local function captureAnimationFrames(args)
             while active and GetGameTimer() < target do Wait(0) end
             if not active then break end
             local sampledAt = GetGameTimer()
-            local image, err = screenshotFrame()
-            if not image then
-                notice('Screenshot ' .. i .. ' failed: ' .. tostring(err))
+            -- A stopped/missing screenshot resource can throw synchronously.
+            -- Treat that as a failed frame so the normal studio cleanup runs.
+            local screenshotOk, image, err = pcall(screenshotFrame)
+            if not screenshotOk or not image then
+                notice('Screenshot ' .. i .. ' failed: ' .. tostring(screenshotOk and err or image))
                 break
             end
             -- Bound client-side screenshot memory during long batch sessions.
@@ -270,10 +272,12 @@ local function captureAnimationFrames(args)
             local outputInterval = #actualIntervals > 0 and math.max(1, math.floor(total / #actualIntervals + 0.5)) or interval
             for i = 1, count do
                 if not active then break end
-                local ok, detail = uploadFrame(name, i, outputInterval, sampled[i])
+                -- Transport/native failures must not terminate the capture
+                -- coroutine before aborting the session and restoring player.
+                local transportOk, ok, detail = pcall(uploadFrame, name, i, outputInterval, sampled[i])
                 sampled[i] = nil
-                if not ok then
-                    notice('Frame upload ' .. i .. ' failed: ' .. tostring(detail))
+                if not transportOk or not ok then
+                    notice('Frame upload ' .. i .. ' failed: ' .. tostring(transportOk and detail or ok))
                     break
                 end
                 saved = saved + 1
