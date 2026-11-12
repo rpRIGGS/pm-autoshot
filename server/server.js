@@ -315,11 +315,13 @@ on('playerDropped', () => {
         if (key.startsWith(prefix)) disposeAnimationSession(key);
     }
 });
+const activePreviewEncodes = new Set();
 onNet('pm-autoshot:server:finishAnimation', async (payload) => {
     const src = source;
     const id = payload && payload.id;
     let ok = false, detail = 'invalid request';
     let encodingSession = null;
+    let reservedPreviewName = null;
     try {
         if (!checkAnimationPermission(src)) throw new Error('permission denied');
         if (!sharp || !PNG) throw new Error('sharp or pngjs unavailable on FXServer');
@@ -332,6 +334,11 @@ onNet('pm-autoshot:server:finishAnimation', async (payload) => {
         const session = animationSessions.get(key);
         if (!session || session.frames.size !== frames) throw new Error('incomplete capture session');
         if (session.encoding) throw new Error('animation encoding already in progress');
+        const previewName = name.toLowerCase();
+        if (activePreviewEncodes.has(previewName))
+            throw new Error('another administrator is encoding this preview: ' + name);
+        activePreviewEncodes.add(previewName);
+        reservedPreviewName = previewName;
         session.encoding = true;
         encodingSession = session;
         const buffers = [];
@@ -365,13 +372,11 @@ onNet('pm-autoshot:server:finishAnimation', async (payload) => {
         // can invalidate the session while the encoder is working.
         if (animationSessions.get(key) !== session || !session.encoding || session.cancelled)
             throw new Error('animation capture was cancelled during encoding');
-        // A capture from another admin must not silently overwrite a
-        // previously completed preview with the same catalog identifier.
-        if (fs.existsSync(outputPath))
-            throw new Error('preview already exists: ' + name + ' (remove it explicitly to recapture)');
+        // An administrator may deliberately recapture an existing emote.
+        // The completed temporary file replaces the previous preview only
+        // after encoding succeeds; the name reservation prevents parallel
+        // encoders from racing to publish the same asset.
         fs.writeFileSync(tmpPath, encoded);
-        if (fs.existsSync(outputPath))
-            throw new Error('preview already exists: ' + name + ' (concurrent capture)');
         fs.renameSync(tmpPath, outputPath);
         session.encoding = false;
         disposeAnimationSession(key);
@@ -396,6 +401,7 @@ onNet('pm-autoshot:server:finishAnimation', async (payload) => {
             catch (cleanupError) { console.log('[PM AutoShot] Partial WebP cleanup failed: ' + cleanupError.message); }
         }
     }
+    if (reservedPreviewName !== null) activePreviewEncodes.delete(reservedPreviewName);
     if (id !== undefined) emitNet('pm-autoshot:client:animationFinished', src, id, ok, detail);
 });
 
