@@ -21,4 +21,7 @@ assert.match(server, /const activePreviewEncodes = new Set\(\)/);
 assert.match(server, /if \(activePreviewEncodes\.has\(previewName\)\)/);
 assert.match(server, /activePreviewEncodes\.delete\(reservedPreviewName\)/);
 assert.match(client, /TriggerServerEvent\('uz_autoshot:server:resetBucket'\)/);
+assert.match(server, /onNet\('uz_autoshot:server:ping',[\s\S]*?checkAce\(src\)/);
+assert.match(server, /onNet\('pm-autoshot:server:pingAnimation',[\s\S]*?checkAnimationPermission\(src\)/);
+assert.match(client, /if \(!ServerReady\(true\)\) then/);
 console.log('PASS: animation studio integration guardrails');
