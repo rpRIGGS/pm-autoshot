@@ -44,4 +44,5 @@ assert.match(client, /AddEventHandler\('onClientResourceStop',[\s\S]*?DestroyOrb
 assert.match(client, /resource ~= GetCurrentResourceName\(\) or not animationStudioActive/);
 assert.match(server, /onNet\('uz_autoshot:server:setBucket', \(bucket\) => \{[\s\S]*?if \(!checkAce\(src\)\) return/);
 assert.match(server, /onNet\('uz_autoshot:server:resetBucket', \(\) => \{\s*const src = source;[\s\S]*?if \(!originalCaptureBuckets\.has\(src\)\) return/);
+assert.match(server, /if \(!originalCaptureBuckets\.has\(src\)\) return;/);
 console.log('PASS: animation studio integration guardrails');
