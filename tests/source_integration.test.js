@@ -83,3 +83,14 @@ assert.match(server, /if \(reservedPreviewName !== null\) activePreviewEncodes\.
 assert.match(server, /if \(animationSessions\.get\(key\) !== session \|\| !session\.encoding \|\| session\.cancelled\)/);
 
 assert.match(server, /const activePreviewEncodes = new Set\(\)/);
+
+// Release handoff must remain explicit about the FiveM acceptance boundary.
+const decisions = fs.readFileSync(path.join(root, 'development-reference/DECISIONS-AND-STATUS.md'), 'utf8');
+const deployment = fs.readFileSync(path.join(root, 'development-reference/PREVIEW-DEPLOYMENT.md'), 'utf8');
+const readme = fs.readFileSync(path.join(root, 'README.md'), 'utf8');
+assert.match(decisions, /Task 5 — release candidate and final documentation reconciliation/);
+assert.match(decisions, /not a production release/);
+assert.match(deployment, /First-server-test acceptance record/);
+assert.match(deployment, /no-go.*bulk generation/i);
+assert.match(readme, /All five offline development tasks are complete/);
+assert.match(deployment, /client\/NUI\/js\/autoshot-previews\.js/);
