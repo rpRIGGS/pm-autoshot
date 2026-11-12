@@ -112,6 +112,7 @@ function install(source, destination, { dryRun = false } = {}) {
     fs.mkdirSync(to, { recursive: true });
     const staged = [];
     const backups = [];
+    const failedRestores = new Set();
     const suffix = '.pm-autoshot-' + process.pid + '-' + Date.now();
     const stage = (destinationFile, bytes) => {
       const temp = destinationFile + suffix + '.tmp';
@@ -140,7 +141,8 @@ function install(source, destination, { dryRun = false } = {}) {
           if (existed && fs.existsSync(backup)) fs.copyFileSync(backup, destinationFile);
           else if (!existed && fs.existsSync(destinationFile)) fs.unlinkSync(destinationFile);
         } catch (rollbackError) {
-          error.message += '; rollback failed for ' + destinationFile + ': ' + rollbackError.message;
+          failedRestores.add(backup);
+          error.message += '; rollback failed for ' + destinationFile + ': ' + rollbackError.message + ' (backup retained at ' + backup + ')';
         }
       }
       throw error;
@@ -149,6 +151,7 @@ function install(source, destination, { dryRun = false } = {}) {
         try { if (fs.existsSync(temp)) fs.unlinkSync(temp); } catch (_) {}
       }
       for (const { backup } of backups) {
+        if (failedRestores.has(backup)) continue;
         try { if (fs.existsSync(backup)) fs.unlinkSync(backup); } catch (_) {}
       }
     }
