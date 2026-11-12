@@ -25,6 +25,21 @@ Updated: 2026-11-11. This document supersedes the earlier chronological, sometim
 | Installer | WebP validation, catalog identity checks, manifest merge, dry-run and rollback | Must run against actual installed resource |
 | PM Emotes | Optional hover/focus preview overlay and NUI manifest loading | In-game NUI appearance not verified |
 
+## Task 2 — runtime code audit closure (2026-11-12)
+
+**Offline source audit complete; live behavior unverified.** The reviewed paths cover studio entry and bucket rollback, client resource-stop cleanup, native emote cancellation, screenshot and latent-upload exceptions, frame acknowledgement, encoder dispatch, encoding cancellation, staging cleanup, filename reservation release, and inactive-session expiry.
+
+Changes made during this audit:
+- Rejecting a partially applied studio bucket request now attempts immediate bucket restoration.
+- Abandoned frame sessions expire by last successful upload activity rather than original creation time.
+- Synchronous screenshot-basic and frame transport failures no longer skip the normal abort/studio cleanup path.
+- Finish-event dispatch errors become explicit capture failures; successful completion clears the active capture identity.
+- Encoder cancellation/disconnect checks, atomic output publishing, failed-encode temp cleanup and reservation release were rechecked; regression assertions protect these paths.
+
+**Scope limit:** Static inspection and Node CI cannot prove actual player position/appearance restoration, screenshot-basic callbacks, native emote cancellation, or FXServer Sharp compatibility. Those are acceptance tests, not unfinished Task 2 code-audit work. Any new runtime defect found during acceptance should be recorded and fixed specifically.
+
+**Next offline task:** Task 3, exact filename/catalog/manifest/NUI integration contract across PM AutoShot and PM Emotes. Do not begin server installation as part of Task 3.
+
 ## Verification evidence and release status
 
 - Node regression suite: passed in GitHub Actions, including [run 43149552482](https://github.com/rpRIGGS/pm-autoshot/actions/runs/43149552482). Automated tests do **not** simulate the FiveM runtime.
