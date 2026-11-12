@@ -372,10 +372,15 @@ onNet('pm-autoshot:server:finishAnimation', async (payload) => {
         // can invalidate the session while the encoder is working.
         if (animationSessions.get(key) !== session || !session.encoding || session.cancelled)
             throw new Error('animation capture was cancelled during encoding');
-        // An administrator may deliberately recapture an existing emote.
-        // The completed temporary file replaces the previous preview only
-        // after encoding succeeds; the name reservation prevents parallel
-        // encoders from racing to publish the same asset.
+        // A completed recapture may replace the same exact filename, but
+        // must never create a case-insensitive collision on Windows hosts.
+        const outputDirectory = path.dirname(outputPath);
+        const conflictingFile = fs.readdirSync(outputDirectory).find(file =>
+            file.toLowerCase() === (name + '.webp').toLowerCase() &&
+            file !== name + '.webp');
+        if (conflictingFile)
+            throw new Error('preview filename conflicts with existing capture: ' + conflictingFile);
+        // Write atomically so an encoder failure cannot destroy the old asset.
         fs.writeFileSync(tmpPath, encoded);
         fs.renameSync(tmpPath, outputPath);
         session.encoding = false;
