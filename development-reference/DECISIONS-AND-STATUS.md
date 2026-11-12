@@ -26,14 +26,16 @@ Updated: 2026-11-11
 - [x] Root README updated to explain the PowerMoves expansion and preserve original upstream documentation.
 - [x] Development reference folder and planning documents established.
 - [x] Initial resource audit completed; fixed hardcoded `cfx-nui-uz_AutoShot` shot URLs, manifest identity and npm package name for `pm-autoshot`. FiveM validation pending.
-- [ ] Animation playback implemented.
-- [ ] Multi-frame capture implemented.
-- [ ] Animated WebP export implemented.
-- [ ] Batch catalog capture implemented.
-- [ ] FiveM in-server tests passed.
+- [x] Animation playback implemented (native PM Emotes and dictionary paths).
+- [x] Multi-frame capture implemented.
+- [x] Animated WebP export implemented.
+- [x] Batch catalog capture implemented.
+- [x] PM Emotes preview installer and NUI overlay implemented.
+- [x] Full Node regression suite passed in GitHub Actions (run 43129205465).
+- [ ] FiveM in-server capture and UI tests passed.
 - [ ] Complete PM Emotes preview library generated.
 
-**Status:** Initial naming compatibility changes committed. Existing upstream event names remain intentionally unchanged to preserve internal client/server compatibility. Animation capture and animated WebP code are not yet implemented or validated.
+**Status:** Implementation and automated Node tests complete; **ready for first FiveM development-server smoke test**, not yet production-verified. The actual FXServer native Sharp module, screenshot capture, prop/scenario playback, and NUI rendering must be tested in-game. GitHub Actions: https://github.com/rpRIGGS/pm-autoshot/actions/runs/43129205465.
 
 ## Technical issues to resolve through implementation
 
