@@ -125,6 +125,13 @@ RP.Exits = {
   const residue = fs.readdirSync(path.join(target, 'client', 'NUI', 'previews'));
   assert.equal(residue.some(name => name.includes('.pm-autoshot-')), false);
 
+  fs.writeFileSync(path.join(shots, 'Emotes_wave.webp'), Buffer.alloc(4));
+  assert.throws(() => install(source, target, { dryRun: true }), /Invalid preview capture size/);
+  fs.unlinkSync(path.join(shots, 'Emotes_wave.webp'));
+  fs.symlinkSync(path.join(target, 'fxmanifest.lua'), path.join(shots, 'Emotes_wave.webp'));
+  assert.throws(() => install(source, target, { dryRun: true }), /not a regular file/);
+  fs.unlinkSync(path.join(shots, 'Emotes_wave.webp'));
+
   console.log('PM Emotes preview installer fixture passed');
 } finally {
   fs.rmSync(root, { recursive: true, force: true });
