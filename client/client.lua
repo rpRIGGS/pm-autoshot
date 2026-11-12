@@ -2347,6 +2347,14 @@ end)
 -- Dedicated animation studio lifecycle. Reuses the original AutoShot ped,
 -- routing bucket, chroma backdrop and orbit camera without altering clothing flows.
 
+local studioBucketRequestId = 0
+local studioBucketResult = nil
+RegisterNetEvent('pm-autoshot:client:studioBucketResult', function(id, ok, reason)
+    if id == studioBucketRequestId then
+        studioBucketResult = { ok = ok, reason = reason }
+    end
+end)
+
 RegisterNetEvent('pm-autoshot:client:openAnimationStudio', function()
     if animationStudioActive or isCapturing or isPreview or isBrowsing then
         TriggerEvent('pm-autoshot:client:studioResult', false, 'AutoShot studio is busy')
@@ -2361,10 +2369,16 @@ RegisterNetEvent('pm-autoshot:client:openAnimationStudio', function()
     captureGender = GetPedGender(ped)
     SaveFullAppearance(ped)
     isPreview = true
-    TriggerServerEvent('uz_autoshot:server:setBucket', Customize.RoutingBucket)
-    Wait(500)
-    if not animationStudioActive then
+    studioBucketRequestId = studioBucketRequestId + 1
+    studioBucketResult = nil
+    TriggerServerEvent('pm-autoshot:server:enterStudioBucket', studioBucketRequestId)
+    local bucketDeadline = GetGameTimer() + 5000
+    while animationStudioActive and not studioBucketResult and GetGameTimer() < bucketDeadline do Wait(25) end
+    if not animationStudioActive or not studioBucketResult or not studioBucketResult.ok then
+        local reason = studioBucketResult and studioBucketResult.reason or 'studio routing bucket timed out'
+        animationStudioActive = false
         CleanupCapture()
+        TriggerEvent('pm-autoshot:client:studioResult', false, reason)
         return
     end
     HideHUD(true)
