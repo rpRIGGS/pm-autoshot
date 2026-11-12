@@ -2412,6 +2412,15 @@ RegisterNetEvent('pm-autoshot:client:openAnimationStudio', function()
     TriggerEvent('pm-autoshot:client:studioResult', true)
 end)
 
+-- The animation studio must restore the player even if this resource is
+-- restarted while a screenshot or encoder request is outstanding.
+AddEventHandler('onClientResourceStop', function(resource)
+    if resource ~= GetCurrentResourceName() or not animationStudioActive then return end
+    animationStudioActive = false
+    DestroyOrbitCamera()
+    CleanupCapture()
+end)
+
 RegisterNetEvent('pm-autoshot:client:closeAnimationStudio', function()
     if not animationStudioActive then return end
     animationStudioActive = false
