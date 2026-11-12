@@ -30,4 +30,5 @@ assert.match(server, /if \(encodingSession\) \{\s*const partial = path\.join/);
 assert.match(server, /if \(encodingSession\) \{/);
 assert.match(customize, /animation\s*=\s*\{ fov = 46\.0/);
 assert.match(client, /CreateOrbitCamera\(ped, 'animation'\)/);
+assert.match(customize, /defaultAngleH = 0\.0/);
 console.log('PASS: animation studio integration guardrails');
