@@ -412,6 +412,8 @@ onNet('pm-autoshot:server:finishAnimation', async (payload) => {
             }
         }
     }
+    // Release the filename reservation regardless of encode outcome.
+    // A failed encode must never block a later retry indefinitely.
     if (reservedPreviewName !== null) activePreviewEncodes.delete(reservedPreviewName);
     if (id !== undefined) emitNet('pm-autoshot:client:animationFinished', src, id, ok, detail);
 });
