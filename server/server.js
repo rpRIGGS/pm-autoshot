@@ -265,7 +265,9 @@ catch (e) { console.log('[PM AutoShot] Animated WebP encoder unavailable: ' + e.
 
 const animationSessions = new Map();
 const MAX_ANIMATION_SESSIONS = 8;
-const ANIMATION_SESSION_TTL = 5 * 60 * 1000;
+// Frame uploads can take up to 20 seconds each. Expire only inactive sessions,
+// not a long capture that is still making progress.
+const ANIMATION_SESSION_TTL = 10 * 60 * 1000;
 
 function animationKey(src, name) { return String(src) + ':' + name; }
 function disposeAnimationSession(key) {
@@ -287,7 +289,7 @@ function disposeAnimationSession(key) {
 function cleanupAnimationSessions() {
     const now = Date.now();
     for (const [key, session] of animationSessions) {
-        if (!session.encoding && now - session.created > ANIMATION_SESSION_TTL) disposeAnimationSession(key);
+        if (!session.encoding && now - (session.updatedAt || session.created) > ANIMATION_SESSION_TTL) disposeAnimationSession(key);
     }
 }
 setInterval(cleanupAnimationSessions, 60 * 1000);
@@ -463,7 +465,7 @@ onNet('pm-autoshot:server:animationFrame', (payload) => {
         if (!animationSessions.has(key)) {
             if (frame !== 1) throw new Error('capture session must begin with frame 1');
             if (animationSessions.size >= MAX_ANIMATION_SESSIONS) throw new Error('too many active sessions');
-            animationSessions.set(key, { created: Date.now(), frames: new Map(), folder: path.join(OUTPUT_DIR, 'animations', String(src), name) });
+            animationSessions.set(key, { created: Date.now(), updatedAt: Date.now(), frames: new Map(), folder: path.join(OUTPUT_DIR, 'animations', String(src), name) });
         }
         const session = animationSessions.get(key);
         if (session.encoding) throw new Error('session is encoding');
@@ -474,6 +476,7 @@ onNet('pm-autoshot:server:animationFrame', (payload) => {
         const framePath = path.join(folder, filename);
         fs.writeFileSync(framePath, PNG.sync.write(png, { colorType: 6 }));
         animationSessions.get(key).frames.set(frame, framePath);
+        session.updatedAt = Date.now();
         ok = true;
         detail = 'animations/' + String(src) + '/' + name + '/' + filename;
     } catch (e) {
