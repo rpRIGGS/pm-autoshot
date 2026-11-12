@@ -94,3 +94,5 @@ assert.match(deployment, /First-server-test acceptance record/);
 assert.match(deployment, /no-go.*bulk generation/i);
 assert.match(readme, /All five offline development tasks are complete/);
 assert.match(deployment, /client\/NUI\/js\/autoshot-previews\.js/);
+
+assert.match(deployment, /Release candidate handoff — offline checks complete/);
