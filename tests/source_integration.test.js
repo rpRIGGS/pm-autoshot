@@ -42,4 +42,6 @@ assert.match(capture, /local wasPlaying = active or capturing or activeNative/);
 assert.match(capture, /elseif wasPlaying then[\s\S]*?ClearPedTasksImmediately/);
 assert.match(client, /AddEventHandler\('onClientResourceStop',[\s\S]*?DestroyOrbitCamera\(\)[\s\S]*?CleanupCapture\(\)/);
 assert.match(client, /resource ~= GetCurrentResourceName\(\) or not animationStudioActive/);
+assert.match(server, /onNet\('uz_autoshot:server:setBucket', \(bucket\) => \{[\s\S]*?if \(!checkAce\(src\)\) return/);
+assert.match(server, /onNet\('uz_autoshot:server:resetBucket', \(\) => \{\s*const src = source;[\s\S]*?if \(!originalCaptureBuckets\.has\(src\)\) return/);
 console.log('PASS: animation studio integration guardrails');
