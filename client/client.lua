@@ -667,7 +667,9 @@ local function RestoreFullAppearance()
     local model = pedAppearance.model
     if not model then return end
 
-    if LoadModel(model) then
+    -- Animation previews keep the original player model. Recreating that
+    -- ped needlessly clears external emote/appearance state and attachments.
+    if GetEntityModel(PlayerPedId()) ~= model and LoadModel(model) then
         SetPlayerModel(PlayerId(), model)
         Wait(150)
         SetModelAsNoLongerNeeded(model)
