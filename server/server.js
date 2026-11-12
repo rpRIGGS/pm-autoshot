@@ -400,10 +400,14 @@ onNet('pm-autoshot:server:finishAnimation', async (payload) => {
                 encodingSession.encoding = false;
                 disposeAnimationSession(sessionKey);
             }
-            // An interrupted encoder must not leave an orphaned temporary WebP.
-            const partial = path.join(OUTPUT_DIR, 'animations', payload.name + '.webp.tmp-' + String(src));
-            try { if (fs.existsSync(partial)) fs.unlinkSync(partial); }
-            catch (cleanupError) { console.log('[PM AutoShot] Partial WebP cleanup failed: ' + cleanupError.message); }
+            // Only the encoder that owned this session may delete its temp
+            // file. A duplicate finish request must not destroy an active
+            // encoder's output while that encoder is publishing the WebP.
+            if (encodingSession) {
+                const partial = path.join(OUTPUT_DIR, 'animations', payload.name + '.webp.tmp-' + String(src));
+                try { if (fs.existsSync(partial)) fs.unlinkSync(partial); }
+                catch (cleanupError) { console.log('[PM AutoShot] Partial WebP cleanup failed: ' + cleanupError.message); }
+            }
         }
     }
     if (reservedPreviewName !== null) activePreviewEncodes.delete(reservedPreviewName);
