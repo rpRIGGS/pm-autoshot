@@ -638,7 +638,7 @@ const originalCaptureBuckets = new Map();
 onNet('uz_autoshot:server:setBucket', (bucket) => {
     const src = source;
     if (!checkAnimationPermission(src)) return;
-    const studioBucket = Number(GetConvar('uz_autoshot_studio_bucket', '991'));
+    const studioBucket = Number(GetConvar('uz_autoshot_studio_bucket', '999'));
     // Only the configured studio bucket is permitted; clients must not
     // choose arbitrary routing buckets via this server event.
     if (!Number.isSafeInteger(bucket) || bucket !== studioBucket) {
