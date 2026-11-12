@@ -80,7 +80,7 @@ AddEventHandler('onClientResourceStop', function(resource)
     if resource ~= GetCurrentResourceName() then return end
     active = false
     if activeNative and GetResourceState('pm-emotes') == 'started' then
-        pcall(function() exports['pm-emotes']:EmoteCancel() end)
+        pcall(function() exports['pm-emotes']:EmoteCancel(true) end)
     end
     activeNative = false
     if capturing then
@@ -95,7 +95,7 @@ RegisterCommand('shotanimstop', function()
         lastCaptureResult = { ok = false, name = activeCaptureName, reason = 'capture cancelled by user' }
     end
     if activeNative and GetResourceState('pm-emotes') == 'started' then
-        pcall(function() exports['pm-emotes']:EmoteCancel() end)
+        pcall(function() exports['pm-emotes']:EmoteCancel(true) end)
     else
         ClearPedTasksImmediately(PlayerPedId())
     end
@@ -196,7 +196,7 @@ local function captureAnimationFrames(args)
             end)
             if not ok then
                 lastCaptureResult = { ok = false, name = name, reason = tostring(err) }
-                pcall(function() exports['pm-emotes']:EmoteCancel() end)
+                pcall(function() exports['pm-emotes']:EmoteCancel(true) end)
                 activeNative = false
                 TriggerEvent('pm-autoshot:client:closeAnimationStudio')
                 capturing = false; active = false; return
@@ -221,7 +221,7 @@ local function captureAnimationFrames(args)
             end
             if not started then
                 lastCaptureResult = { ok = false, name = name, reason = 'PM Emotes did not start the requested emote' }
-                pcall(function() exports['pm-emotes']:EmoteCancel() end)
+                pcall(function() exports['pm-emotes']:EmoteCancel(true) end)
                 activeNative = false
                 TriggerEvent('pm-autoshot:client:closeAnimationStudio')
                 capturing = false; active = false
@@ -255,7 +255,7 @@ local function captureAnimationFrames(args)
         local saved = 0
         -- Stop the animation before uploading; uploads can take several seconds.
         if native then
-            pcall(function() exports['pm-emotes']:EmoteCancel() end)
+            pcall(function() exports['pm-emotes']:EmoteCancel(true) end)
             activeNative = false
         else
             ClearPedTasks(ped)
