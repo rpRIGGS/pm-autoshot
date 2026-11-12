@@ -30,7 +30,11 @@ try {
   fs.mkdirSync(shots, { recursive: true });
   fs.mkdirSync(path.join(target, 'client', 'NUI'), { recursive: true });
   fs.writeFileSync(path.join(target, 'fxmanifest.lua'), "game 'gta5'\nfiles {\n    'client/NUI/index.html',\n}\n");
-  fs.writeFileSync(path.join(target, 'client', 'NUI', 'index.html'), '<html></html>');
+  fs.mkdirSync(path.join(target, 'client', 'NUI', 'js'), { recursive: true });
+  const loader = path.join(target, 'client', 'NUI', 'js', 'autoshot-previews.js');
+  fs.writeFileSync(loader, '// PM AutoShot preview loader');
+  fs.writeFileSync(path.join(target, 'client', 'NUI', 'index.html'),
+    '<html><script type="module" src="js/autoshot-previews.js"></script></html>');
   for (const name of ['Emotes_wave.webp', 'Dances_wave.webp', 'not-an-emote.webp']) {
     fs.writeFileSync(path.join(shots, name), fakeWebP());
   }
@@ -48,6 +52,14 @@ RP.PropEmotes = {
 `);
   fs.writeFileSync(path.join(shots, 'Emotes_wave_hello.webp'), fakeWebP());
   fs.writeFileSync(path.join(shots, 'PropEmotes_coffee.webp'), fakeWebP());
+  fs.unlinkSync(loader);
+  assert.throws(() => install(source, target, { dryRun: true }), /missing the AutoShot preview loader/);
+  fs.writeFileSync(loader, '// PM AutoShot preview loader');
+  const nuiIndex = path.join(target, 'client', 'NUI', 'index.html');
+  const originalIndex = fs.readFileSync(nuiIndex, 'utf8');
+  fs.writeFileSync(nuiIndex, '<html></html>');
+  assert.throws(() => install(source, target, { dryRun: true }), /missing the AutoShot preview loader/);
+  fs.writeFileSync(nuiIndex, originalIndex);
   const preview = install(source, target, { dryRun: true });
   assert.equal(preview.count, 4);
   assert.equal(fs.existsSync(path.join(target, 'client', 'NUI', 'previews')), false);
