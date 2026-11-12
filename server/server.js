@@ -293,6 +293,15 @@ function cleanupAnimationSessions() {
 setInterval(cleanupAnimationSessions, 60 * 1000);
 on('onResourceStop', (resourceName) => {
     if (resourceName !== RESOURCE) return;
+    for (const [playerId, bucket] of originalCaptureBuckets) {
+        try {
+            if (GetPlayerName(String(playerId)) !== null)
+                SetPlayerRoutingBucket(String(playerId), bucket);
+        } catch (error) {
+            console.log('[PM AutoShot] Could not restore routing bucket for ' + playerId + ': ' + error.message);
+        }
+    }
+    originalCaptureBuckets.clear();
     for (const [key, session] of animationSessions) {
         if (session.encoding) session.cancelled = true;
         else disposeAnimationSession(key);
