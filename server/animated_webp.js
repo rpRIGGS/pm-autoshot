@@ -29,8 +29,13 @@ function extractFrameChunks(webp) {
     return Buffer.concat(parts);
 }
 async function encodeAnimation(sharp, rgbaFrames, width, height, delayMs) {
-    if (rgbaFrames.length < 2 || rgbaFrames.length > 24) throw new Error('invalid frame count');
-    if (width < 1 || height < 1 || width > 1024 || height > 1024) throw new Error('invalid canvas');
+    if (!Array.isArray(rgbaFrames) || rgbaFrames.length < 2 || rgbaFrames.length > 24)
+        throw new Error('invalid frame count');
+    if (!Number.isInteger(width) || !Number.isInteger(height) ||
+        width < 1 || height < 1 || width > 1024 || height > 1024)
+        throw new Error('invalid canvas');
+    if (width * height * rgbaFrames.length > 1024 * 1024 * 24)
+        throw new Error('animation pixel budget exceeded');
     const vp8x = Buffer.alloc(10);
     vp8x[0] = 0x12; // animation + alpha
     uint24(width - 1).copy(vp8x, 4);
@@ -39,7 +44,8 @@ async function encodeAnimation(sharp, rgbaFrames, width, height, delayMs) {
     if (!Number.isInteger(delayMs) || delayMs < 1 || delayMs > 0xffffff) throw new Error('invalid frame delay');
     const parts = [chunk('VP8X', vp8x), chunk('ANIM', anim)];
     for (const rgba of rgbaFrames) {
-        if (rgba.length !== width * height * 4) throw new Error('incorrect RGBA frame length');
+        if (!Buffer.isBuffer(rgba) || rgba.length !== width * height * 4)
+            throw new Error('incorrect RGBA frame length');
         const still = await sharp(rgba, { raw: { width, height, channels: 4 } })
             .webp({ lossless: true, effort: 4 }).toBuffer();
         const header = Buffer.alloc(16);
