@@ -39,7 +39,7 @@ local function uploadFrame(name, frameIndex, interval, image)
     uploadSequence = uploadSequence + 1
     local id = uploadSequence
     pending[id] = { done = false }
-    TriggerLatentServerEvent('pm-autoshot:server:animationFrame', 8000000, {
+    TriggerLatentServerEvent('pm-autoshot:server:animationFrame', Customize.LatentRate or 8000000, {
         id = id, name = name, frame = frameIndex, imageData = image, interval = interval,
         chromaKey = Customize.ChromaKeyColor or 'green',
         transparent = true,
