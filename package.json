@@ -6,7 +6,7 @@
   "scripts": {
     "test:webp": "node tests/animated_webp.test.js",
     "test:catalog": "node tests/emote_catalog.test.js",
-    "test": "npm run test:catalog && npm run test:installer && npm run test:webp",
+    "test": "npm run test:catalog && npm run test:installer && npm run test:webp && node tests/source_integration.test.js",
     "test:installer": "node tests/install_previews.test.js"
   },
   "dependencies": {
