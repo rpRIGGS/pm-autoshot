@@ -96,7 +96,9 @@ RegisterCommand('shotanimstop', function()
     end
     if activeNative and GetResourceState('pm-emotes') == 'started' then
         pcall(function() exports['pm-emotes']:EmoteCancel(true) end)
-    else
+    elseif active or capturing then
+        -- Never cancel an unrelated player emote when the stop command is
+        -- issued while AutoShot is idle.
         ClearPedTasksImmediately(PlayerPedId())
     end
     activeNative = false
