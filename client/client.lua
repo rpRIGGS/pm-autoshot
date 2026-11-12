@@ -1857,6 +1857,8 @@ end
 
 -- ════════════════════════════════════════════════════════
 -- BACKGROUND THREAD
+-- Declared before the thread so its closure reads the local studio flag.
+local animationStudioActive = false
 -- ════════════════════════════════════════════════════════
 
 CreateThread(function()
@@ -2344,7 +2346,7 @@ end)
 
 -- Dedicated animation studio lifecycle. Reuses the original AutoShot ped,
 -- routing bucket, chroma backdrop and orbit camera without altering clothing flows.
-local animationStudioActive = false
+
 RegisterNetEvent('pm-autoshot:client:openAnimationStudio', function()
     if animationStudioActive or isCapturing or isPreview or isBrowsing then
         TriggerEvent('pm-autoshot:client:studioResult', false, 'AutoShot studio is busy')
