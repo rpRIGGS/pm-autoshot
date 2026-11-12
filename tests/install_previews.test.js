@@ -113,6 +113,18 @@ RP.Exits = {
   assert.throws(() => install(source, target), /No animated WebP captures/);
   assert.equal(fs.readFileSync(path.join(target, 'client', 'NUI', 'previews', 'manifest.json'), 'utf8'), retainedManifest);
 
+  // A malformed installed manifest must fail before replacing any files.
+  fs.writeFileSync(path.join(shots, 'Emotes_wave.webp'), fakeWebP());
+  const installedManifest = path.join(target, 'client', 'NUI', 'previews', 'manifest.json');
+  const goodManifest = fs.readFileSync(installedManifest, 'utf8');
+  fs.writeFileSync(installedManifest, '{invalid-json');
+  assert.throws(() => install(source, target), /Unexpected token|Expected property|JSON/);
+  assert.equal(fs.readFileSync(installedManifest, 'utf8'), '{invalid-json');
+  fs.writeFileSync(installedManifest, goodManifest);
+  assert.equal(install(source, target).count, 4);
+  const residue = fs.readdirSync(path.join(target, 'client', 'NUI', 'previews'));
+  assert.equal(residue.some(name => name.includes('.pm-autoshot-')), false);
+
   console.log('PM Emotes preview installer fixture passed');
 } finally {
   fs.rmSync(root, { recursive: true, force: true });
