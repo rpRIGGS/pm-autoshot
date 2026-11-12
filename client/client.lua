@@ -1400,8 +1400,11 @@ local function CleanupCapture()
     captureMode = 'clothing'
     local ped = PlayerPedId()
     if not IsEntityVisible(ped) then SetEntityVisible(ped, true, false) end
-    RestoreFullAppearance()
+    -- Restore the original routing bucket before collision streaming at the
+    -- player's saved location; otherwise the world may still be isolated.
     TriggerServerEvent('uz_autoshot:server:resetBucket')
+    Wait(200)
+    RestoreFullAppearance()
     SetNuiFocus(false, false)
 end
 
