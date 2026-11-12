@@ -38,4 +38,7 @@ assert.match(client, /TriggerServerEvent\('pm-autoshot:server:enterStudioBucket'
 assert.match(client, /while animationStudioActive and not studioBucketResult/);
 assert.match(client, /if ok then TriggerServerEvent\('uz_autoshot:server:resetBucket'\) end/);
 assert.match(client, /studio routing bucket timed out/);
+assert.match(capture, /local wasPlaying = active or capturing or activeNative/);
+assert.match(capture, /elseif wasPlaying then[\s\S]*?ClearPedTasksImmediately/);
+assert.match(client, /AddEventHandler\('onClientResourceStop',[\s\S]*?DestroyOrbitCamera\(\)[\s\S]*?CleanupCapture\(\)/);
 console.log('PASS: animation studio integration guardrails');
