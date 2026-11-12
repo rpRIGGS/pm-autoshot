@@ -300,6 +300,7 @@ on('onResourceStop', (resourceName) => {
 });
 
 on('playerDropped', () => {
+    originalCaptureBuckets.delete(source);
     const prefix = String(source) + ':';
     for (const key of animationSessions.keys()) {
         if (key.startsWith(prefix)) disposeAnimationSession(key);
