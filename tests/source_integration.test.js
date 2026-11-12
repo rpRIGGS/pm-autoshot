@@ -72,3 +72,12 @@ assert.match(capture, /local screenshotOk, image, err = pcall\(screenshotFrame\)
 assert.match(capture, /local transportOk, ok, detail = pcall\(uploadFrame, name, i, outputInterval, sampled\[i\]\)/);
 
 assert.match(capture, /TriggerEvent\('pm-autoshot:client:closeAnimationStudio'\)/);
+
+// Finish-event transport failures must flow into the same failure/abort/restore path.
+assert.match(capture, /local finishSent, finishError = pcall\(TriggerServerEvent, 'pm-autoshot:server:finishAnimation'/);
+assert.match(capture, /if not finishSent then[\s\S]*?finishResults\[id\] = \{ done = true, ok = false/);
+assert.match(capture, /activeCaptureName = nil\s*notice\(\('Captured/);
+// Encoder failure and cancellation must release the reservation and dispose owned staging.
+assert.match(server, /if \(encodingSession && current === encodingSession\)/);
+assert.match(server, /if \(reservedPreviewName !== null\) activePreviewEncodes\.delete\(reservedPreviewName\)/);
+assert.match(server, /if \(animationSessions\.get\(key\) !== session \|\| !session\.encoding \|\| session\.cancelled\)/);
