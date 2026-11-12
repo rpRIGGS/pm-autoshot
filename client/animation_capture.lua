@@ -29,9 +29,9 @@ local function screenshotFrame()
     end)
     local deadline = GetGameTimer() + 12000
     while not done and active and GetGameTimer() < deadline do Wait(10) end
-    if not active or not done or type(image) ~= 'string' or image == '' then
-        return nil, 'screenshot timed out'
-    end
+    if not active then return nil, 'capture cancelled' end
+    if not done then return nil, 'screenshot timed out' end
+    if type(image) ~= 'string' or image == '' then return nil, 'empty screenshot' end
     return image
 end
 
