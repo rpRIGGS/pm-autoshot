@@ -37,4 +37,5 @@ assert.match(server, /pm-autoshot:client:studioBucketResult/);
 assert.match(client, /TriggerServerEvent\('pm-autoshot:server:enterStudioBucket', studioBucketRequestId\)/);
 assert.match(client, /while animationStudioActive and not studioBucketResult/);
 assert.match(client, /if ok then TriggerServerEvent\('uz_autoshot:server:resetBucket'\) end/);
+assert.match(client, /studio routing bucket timed out/);
 console.log('PASS: animation studio integration guardrails');
