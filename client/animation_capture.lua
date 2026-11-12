@@ -289,9 +289,13 @@ local function captureAnimationFrames(args)
             uploadSequence = uploadSequence + 1
             local id = uploadSequence
             finishResults[id] = { done = false }
-            TriggerServerEvent('pm-autoshot:server:finishAnimation', { id = id, name = name, frames = count, interval = interval })
+            local finishSent, finishError = pcall(TriggerServerEvent, 'pm-autoshot:server:finishAnimation',
+                { id = id, name = name, frames = count, interval = interval })
+            if not finishSent then
+                finishResults[id] = { done = true, ok = false, detail = tostring(finishError) }
+            end
             local deadline = GetGameTimer() + 45000
-            while active and not finishResults[id].done and GetGameTimer() < deadline do Wait(50) end
+            while active and finishResults[id] and not finishResults[id].done and GetGameTimer() < deadline do Wait(50) end
             local result = finishResults[id]
             finishResults[id] = nil
             if result and result.done and result.ok then
@@ -310,6 +314,7 @@ local function captureAnimationFrames(args)
         if not lastCaptureResult.ok then TriggerServerEvent('pm-autoshot:server:abortAnimation', name) end
         TriggerEvent('pm-autoshot:client:closeAnimationStudio')
         capturing = false; active = false
+        activeCaptureName = nil
         notice(('Captured %d/%d PNG frames for %s'):format(saved, count, name))
     end)
 end
