@@ -38,7 +38,14 @@ function install(source, destination, { dryRun = false } = {}) {
   const manifest = {};
   if (!fs.existsSync(from)) throw new Error('Missing capture directory: ' + from);
   if (!fs.existsSync(path.join(destination, 'fxmanifest.lua'))) throw new Error('Destination is not a FiveM resource');
-  if (!fs.existsSync(path.join(destination, 'client', 'NUI', 'index.html'))) throw new Error('Destination is not PM Emotes NUI');
+  const nuiIndex = path.join(destination, 'client', 'NUI', 'index.html');
+  const nuiPreviewLoader = path.join(destination, 'client', 'NUI', 'js', 'autoshot-previews.js');
+  if (!fs.existsSync(nuiIndex)) throw new Error('Destination is not PM Emotes NUI');
+  // A successful copy is useless if the installed NUI never loads the preview
+  // overlay. Refuse deployment to an older or incompatible PM Emotes fork.
+  if (!fs.existsSync(nuiPreviewLoader) ||
+      !fs.readFileSync(nuiIndex, 'utf8').includes('js/autoshot-previews.js'))
+    throw new Error('PM Emotes NUI is missing the AutoShot preview loader');
   // Recover original (possibly spaced/punctuated) emote keys from the
   // installed PM Emotes catalog; capture filenames contain sanitized keys.
   const knownKeys = new Map();
