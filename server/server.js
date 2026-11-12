@@ -404,7 +404,11 @@ onNet('pm-autoshot:server:animationFrame', (payload) => {
         if (!Number.isInteger(frame) || frame < 1 || frame > 24) throw new Error('invalid frame index');
         const encoded = payload.imageData;
         if (typeof encoded !== 'string' || encoded.length > Math.ceil(MAX_ANIM_FRAME_BYTES * 4 / 3) + 128) throw new Error('frame too large');
-        const raw = Buffer.from(stripDataUri(encoded), 'base64');
+        const base64 = stripDataUri(encoded);
+        if (typeof base64 !== 'string' || base64.length === 0 ||
+            base64.length % 4 !== 0 || !/^[A-Za-z0-9+/]*={0,2}$/.test(base64))
+            throw new Error('invalid base64 screenshot');
+        const raw = Buffer.from(base64, 'base64');
         if (!raw.length || raw.length > MAX_ANIM_FRAME_BYTES) throw new Error('invalid frame data');
         // Reject oversized PNG dimensions before pngjs allocates decoded RGBA.
         if (raw.length < 24 || raw.toString('hex', 0, 8) !== '89504e470d0a1a0a' ||
