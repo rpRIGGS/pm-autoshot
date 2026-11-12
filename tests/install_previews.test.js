@@ -140,6 +140,27 @@ RP.Exits = {
   assert.equal(fs.readFileSync(installedManifest, 'utf8'), '{invalid-json');
   fs.writeFileSync(installedManifest, goodManifest);
   assert.equal(install(source, target).count, 4);
+  // Simulate a mid-commit filesystem failure. Already replaced assets and
+  // manifest must roll back to their exact prior bytes.
+  const previousImage = fs.readFileSync(path.join(target, 'client', 'NUI', 'previews', 'Emotes_wave.webp'));
+  const previousManifestBytes = fs.readFileSync(installedManifest);
+  const originalRename = fs.renameSync;
+  let injected = false;
+  try {
+    fs.renameSync = function (from, to) {
+      if (!injected && to === installedManifest && from.includes('.pm-autoshot-')) {
+        injected = true;
+        throw new Error('simulated manifest publish failure');
+      }
+      return originalRename.apply(this, arguments);
+    };
+    assert.throws(() => install(source, target), /simulated manifest publish failure/);
+    assert.equal(injected, true);
+  } finally {
+    fs.renameSync = originalRename;
+  }
+  assert.deepEqual(fs.readFileSync(installedManifest), previousManifestBytes);
+  assert.deepEqual(fs.readFileSync(path.join(target, 'client', 'NUI', 'previews', 'Emotes_wave.webp')), previousImage);
   const residue = fs.readdirSync(path.join(target, 'client', 'NUI', 'previews'));
   assert.equal(residue.some(name => name.includes('.pm-autoshot-')), false);
 
