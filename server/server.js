@@ -710,6 +710,20 @@ onNet('pm-autoshot:server:enterStudioBucket', (requestId) => {
         reason = null;
     } catch (error) {
         reason = error.message || String(error);
+        // A rejected studio entry must not retain a tracked bucket or leave
+        // the player in a partially applied routing bucket.
+        if (originalCaptureBuckets.has(src)) {
+            const previous = originalCaptureBuckets.get(src);
+            try {
+                SetPlayerRoutingBucket(String(src), previous);
+                if (GetPlayerRoutingBucket(String(src)) === previous)
+                    originalCaptureBuckets.delete(src);
+                else
+                    reason += '; failed to restore original routing bucket';
+            } catch (restoreError) {
+                reason += '; bucket restoration failed: ' + restoreError.message;
+            }
+        }
     }
     if (Number.isSafeInteger(requestId) && requestId > 0)
         emitNet('pm-autoshot:client:studioBucketResult', src, requestId, ok, reason);
