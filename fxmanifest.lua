@@ -32,6 +32,6 @@ files {
 }
 
 dependencies {
-	'screenshot-basic',
+    'screenshot-basic',
     'yarn'
 }
