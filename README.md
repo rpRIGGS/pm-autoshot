@@ -6,22 +6,19 @@
 
 Add an **animation/emote capture mode** to the existing AutoShot tool, without replacing or removing its original features. The primary use case is generating accurate, locally stored animated previews for the full **PM Emotes** catalog, including animations not covered by third-party preview libraries.
 
-### Planned additions (not implemented yet)
+### Implemented animation preview pipeline
 
-- Import the real PM Emotes animation definitions, preserving their identifiers and playback settings.
-- Play each supported animation on the studio ped, including applicable props and attachments.
-- Capture timed frame sequences while animations run, using AutoShot's studio and background-removal pipeline.
-- Export transparent animated WebP previews, with predictable filenames mapped to PM Emotes identifiers.
-- Run unattended batches with start/pause/resume/stop, skip completed files, retries, failure reports, and recovery after interruptions.
-- Verify sample previews inside the actual PM Emotes NUI before attempting full-catalog capture.
+- PM Emotes catalog import for Emotes, Dances, Exits and PropEmotes.
+- Native PM Emotes playback for supported entries, with direct animation-dictionary capture also available.
+- Screenshot frame upload, transparent chroma-key processing, staged frames and animated WebP encoding.
+- Batch commands, stop/abort handling, preview installer with dry-run and rollback safeguards.
+- Server doctor command with a real WebP encode/decode probe and automated Node regression tests.
+
+**Validation status:** Automated Node tests pass, but a live FiveM screenshot-to-WebP-to-NUI capture has **not** been verified. This is not a production-readiness claim. The actual FXServer Node runtime, screenshot-basic, routing bucket restoration, animations with props and NUI playback require a development-server smoke test. See [deployment and first-run checks](development-reference/PREVIEW-DEPLOYMENT.md).
 
 ### Resource boundaries
 
-**PM AutoShot** is a development-side capture tool; **PM Emotes** remains the separate player-facing emote resource. Generated preview files will be copied into PM Emotes and served locally by its NUI. PM AutoShot must not become a runtime dependency for players.
-
-### Development status
-
-The repository currently contains the upstream AutoShot functionality. **Animation capture and animated WebP generation are planned, not yet delivered or verified.** Existing upstream instructions below describe the current behavior; installation names and paths must be checked if the FiveM resource folder is renamed from `uz_AutoShot`.
+**PM AutoShot** is an administrator-side development capture tool; **PM Emotes** remains the player-facing resource. Generated assets are installed explicitly into PM Emotes and do not require PM AutoShot to remain running for players.
 
 ### Upstream credits and license
 
