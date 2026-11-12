@@ -5,6 +5,32 @@ now contains an optional animated-preview overlay
 (`client/NUI/js/autoshot-previews.js`) that reads the deployed manifest.
 Without assets, the ordinary emote menu continues to work.
 
+## Offline package audit (2026-11-11)
+
+The following paths were checked against the repository:
+
+| Requirement | Repository evidence | Result |
+|---|---|---|
+| FiveM resource identity | `fxmanifest.lua` names PM AutoShot and references `pm-autoshot` | Present |
+| Client load order | `client/client.lua` precedes `client/animation_capture.lua` | Present |
+| Server load order | `server/version.lua`, `server/config_bridge.lua`, then `server/server.js` | Present |
+| Built UI | `resources/build/index.html` exists and is declared in `files` | Present |
+| Screenshot dependency | `screenshot-basic` declared in `dependencies` | Declared; runtime unverified |
+| Yarn dependency | `yarn` declared in `dependencies` | Declared; runtime unverified |
+| Node packages | `package.json` declares `sharp` and `pngjs` | Declared; native FXServer load unverified |
+| Preview installer | `tools/install-previews.js` exists; tests cover mapping and rollback | Present; real destination unverified |
+| PM Emotes integration | Separate NUI preview script and manifest reference | Present; live NUI unverified |
+
+**Not a clean-install certification.** A repository file audit cannot establish that a server host's artifact version, Yarn setup, operating-system-specific Sharp binary, filesystem permissions, or screenshot-basic resource actually work. Do not substitute a CI pass for those checks.
+
+### Deployment preparation — no server changes yet
+
+- Use the resource folder name **`pm-autoshot`** and keep `Customize.lua`, `client/`, `server/`, `resources/build/`, `fxmanifest.lua` and `package.json` together.
+- Install `screenshot-basic` and the declared `yarn` dependency. Start `pm-emotes` before requesting its catalog, and start `pm-autoshot` only after its dependencies.
+- Ensure Node packages install inside the **PM AutoShot resource directory**; check `sharp` and `pngjs` before interpreting any screenshot failure.
+- Use an existing QBCore admin ACE or the configured legacy command ACE for animation diagnostics and capture; do not grant a new permission just for this tool.
+- Preserve a backup of the destination PM Emotes preview directory and manifest before the first asset deployment.
+
 ## First-server-test acceptance record (fill in after testing)
 
 | Check | Expected result | Actual result |
