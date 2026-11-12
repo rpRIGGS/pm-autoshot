@@ -5,7 +5,7 @@ now contains an optional animated-preview overlay
 (`client/NUI/js/autoshot-previews.js`) that reads the deployed manifest.
 Without assets, the ordinary emote menu continues to work.
 
-## Offline package audit (2026-11-11)
+## Offline package audit (2026-11-12)
 
 The following paths were checked against the repository:
 
@@ -30,6 +30,18 @@ The following paths were checked against the repository:
 - Ensure Node packages install inside the **PM AutoShot resource directory**; check `sharp` and `pngjs` before interpreting any screenshot failure.
 - Use an existing QBCore admin ACE or the configured legacy command ACE for animation diagnostics and capture; do not grant a new permission just for this tool.
 - Preserve a backup of the destination PM Emotes preview directory and manifest before the first asset deployment.
+
+## Release candidate handoff — offline checks complete
+
+The five agreed **offline** development tasks are complete. Source and CI verification do **not** certify a working FiveM installation or an actual emote preview. The next stage is a **single development-server acceptance session**, not bulk capture and not production rollout.
+
+**Preflight inventory:** The PM AutoShot resource must contain `fxmanifest.lua`, `Customize.lua`, `client/`, `server/`, `resources/build/`, `package.json` and `tools/install-previews.js`. The PM Emotes resource must contain its NUI entry point and `client/NUI/js/autoshot-previews.js`. Neither resource should require a generated preview manifest before first capture. Keep the two repositories independent.
+
+**Decision gates:** (1) Start resources and verify `/shotanimdoctor` including real FXServer Sharp encode/decode; (2) verify catalog and a single ordinary emote; (3) confirm cancellation and studio restoration; (4) sample native prop/scenario playback; (5) only then dry-run and install that sample into PM Emotes; (6) verify hover preview and missing-preview fallback. Stop at the first failing gate, preserve the console error, and fix only that defect before continuing.
+
+**Record after testing:** Development server artifact/build, OS, PM AutoShot and PM Emotes commit hashes, screenshot-basic and yarn versions, doctor output, catalog count, WebP filename/size, capture duration, restoration result, installer dry-run output and NUI result. Mark each acceptance-table row Pass/Fail with notes. A failed gate means **no-go** for bulk generation.
+
+**Rollback:** If the studio misbehaves, use the stop command and verify original position/camera/bucket. If the NUI deployment misbehaves, restore the pre-deployment PM Emotes `client/NUI/previews/` and `fxmanifest.lua` backups; do not delete PM Emotes or disable its core menu to solve missing preview assets.
 
 ## First-server-test acceptance record (fill in after testing)
 
