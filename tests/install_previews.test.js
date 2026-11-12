@@ -62,6 +62,7 @@ RP.PropEmotes = {
   fs.writeFileSync(nuiIndex, originalIndex);
   const preview = install(source, target, { dryRun: true });
   assert.equal(preview.count, 4);
+  assert.equal(preview.entries['Emotes:wave hello'], 'previews/Emotes_wave_hello.webp');
   assert.equal(fs.existsSync(path.join(target, 'client', 'NUI', 'previews')), false);
   const result = install(source, target);
   assert.equal(result.count, 4);
