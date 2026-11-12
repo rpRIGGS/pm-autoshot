@@ -8,6 +8,16 @@ const capture = fs.readFileSync(path.join(root, 'client/animation_capture.lua'),
 const customize = fs.readFileSync(path.join(root, 'Customize.lua'), 'utf8');
 const bridge = fs.readFileSync(path.join(root, 'server/config_bridge.lua'), 'utf8');
 const server = fs.readFileSync(path.join(root, 'server/server.js'), 'utf8');
+const manifest = fs.readFileSync(path.join(root, 'fxmanifest.lua'), 'utf8');
+const packageInfo = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+assert.match(manifest, /ui_page 'resources\/build\/index\.html'/);
+assert.match(manifest, /'screenshot-basic'/);
+assert.match(manifest, /'yarn'/);
+assert.ok(fs.existsSync(path.join(root, 'resources/build/index.html')));
+assert.ok(fs.existsSync(path.join(root, 'tools/install-previews.js')));
+assert.ok(packageInfo.dependencies.sharp && packageInfo.dependencies.pngjs);
+assert.ok(manifest.indexOf("'client/client.lua'") < manifest.indexOf("'client/animation_capture.lua'"));
+assert.ok(manifest.indexOf("'server/config_bridge.lua'") < manifest.indexOf("'server/server.js'"));
 const loop = client.slice(client.indexOf('-- BACKGROUND THREAD'), client.indexOf('-- CLOTHING MENU', client.indexOf('-- BACKGROUND THREAD')));
 assert.match(loop, /local animationStudioActive = false/);
 assert.match(loop, /if not animationStudioActive then ClearPedTasksImmediately\(ped\) end/);
