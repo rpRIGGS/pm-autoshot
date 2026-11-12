@@ -2360,16 +2360,16 @@ RegisterNetEvent('pm-autoshot:client:openAnimationStudio', function()
     HideHUD(true)
     -- Keep the player's existing model and appearance. Replacing the model
     -- here desynchronizes PM Emotes' cached model and can reject emotes.
-    SetEntityCoordsNoOffset(ped, Customize.StudioCoords.x, Customize.StudioCoords.y, Customize.StudioCoords.z, false, false, false)
-    SetEntityHeading(ped, Customize.StudioHeading)
-    FreezeEntityPosition(ped, true)
-    SetPlayerControl(PlayerId(), false, 0)
     if not ped or not DoesEntityExist(ped) then
         animationStudioActive = false
         CleanupCapture()
         TriggerEvent('pm-autoshot:client:studioResult', false, 'studio ped unavailable')
         return
     end
+    SetEntityCoordsNoOffset(ped, Customize.StudioCoords.x, Customize.StudioCoords.y, Customize.StudioCoords.z, false, false, false)
+    SetEntityHeading(ped, Customize.StudioHeading)
+    FreezeEntityPosition(ped, true)
+    SetPlayerControl(PlayerId(), false, 0)
     if not animationStudioActive then
         CleanupCapture()
         return
