@@ -1,6 +1,6 @@
 # PM AutoShot — decisions, inventory and handoff
 
-Updated: 2026-11-11. This document supersedes the earlier chronological, sometimes contradictory implementation checkpoints.
+Updated: 2026-11-12. This document supersedes the earlier chronological, sometimes contradictory implementation checkpoints.
 
 ## Non-negotiable decisions
 
@@ -25,6 +25,26 @@ Updated: 2026-11-11. This document supersedes the earlier chronological, sometim
 | Installer | WebP validation, catalog identity checks, manifest merge, dry-run and rollback | Must run against actual installed resource |
 | PM Emotes | Optional hover/focus preview overlay and NUI manifest loading | In-game NUI appearance not verified |
 
+## Task 5 — release candidate and final documentation reconciliation (2026-11-12)
+
+**Offline development checklist: 5/5 complete, subject to the final CI release gate.** This is a **development-server evaluation candidate**, not a production release and not a verified complete preview library.
+
+| Task | Final status | Evidence |
+|---|---|---|
+| 1. Package/dependency audit | Complete offline | `fxmanifest.lua`, startup requirements and `PREVIEW-DEPLOYMENT.md` |
+| 2. Runtime source audit | Complete offline | Bucket, capture, cancellation, encoder and cleanup fixes; source assertions |
+| 3. Cross-repository preview contract | Complete offline | PM Emotes NUI and AutoShot installer identity/loader checks; CI 43160473108 |
+| 4. Automated failure cases | Complete offline | Node 22 regression CI 43160738776; injected rollback, WebP round-trip |
+| 5. Release preparation | Complete after final CI gate | This status record, consolidated release checklist, README and deployment guide |
+
+**Release inventory:** `fxmanifest.lua`, `Customize.lua`, `client/client.lua`, `client/animation_capture.lua`, `server/config_bridge.lua`, `server/server.js`, `server/emote_catalog.js`, `server/animated_webp.js`, `resources/build/index.html`, `package.json`, `tools/install-previews.js`, and four Node test files. PM Emotes integration is in its **separate** repository: `client/NUI/js/autoshot-previews.js`, `client/NUI/index.html`, `client/NUI/js/main.js`, and `fxmanifest.lua`. The generated `shots/animations/*.webp` and PM Emotes `client/NUI/previews/manifest.json` are intentionally **not** included; they require real captures.
+
+**Versioning:** Existing resource manifest version `2.3.0` is preserved. No GitHub release or version tag is created; the status is explicitly an offline-validated evaluation candidate, not an advertised stable version.
+
+**Known boundaries:** Shared/animal/special emotes are outside supported capture coverage. Host-specific Sharp binary loading, live screenshot-basic behavior, studio restoration, prop/scenario playback and NUI display are still unknown. These are **not** offline Task 5 omissions and must be checked individually before any bulk generation or production deployment.
+
+**First live acceptance:** Follow the finite acceptance table in `PREVIEW-DEPLOYMENT.md`; record observed results, logs and failed checks there. No claims of a completed full-catalog library or production readiness should be made until those checks pass.
+
 ## Task 4 — automated failure-case validation (2026-11-12)
 
 **Completed for the offline Node regression scope.** Full GitHub Actions suite passed in run 43160738776 (Node 22): catalog parser, preview installer, animated WebP encoder, and source integration checks.
@@ -39,11 +59,11 @@ Additional negative and recovery tests added:
 
 **Not covered offline:** FiveM native lifecycle, screenshot-basic callbacks, real NUI rendering, server host-specific Sharp binaries, permissions, and player restoration. These require later live acceptance; no claim of live readiness follows from this validation.
 
-**Next:** Task 5 release preparation: final artifact inventory, version/release notes, and documentation reconciliation. No server installation until the agreed offline checklist is complete.
+**Next:** Task 5 release preparation: final artifact inventory, version/release notes, and documentation reconciliation.
 
 ## Task 3 — preview integration contract audit (2026-11-12)
 
-**Offline integration review complete, pending final regression CI.** Cross-checked PM Emotes `types.lua`, `client/NUI/EmoteMenuNUI.lua`, `client/NUI/js/main.js`, `client/NUI/js/autoshot-previews.js`, `client/NUI/index.html`, `fxmanifest.lua`, and both animation catalog files against PM AutoShot's `server/emote_catalog.js` and `tools/install-previews.js`.
+**Offline integration review complete; regression CI passed in run 43160473108.** Cross-checked PM Emotes `types.lua`, `client/NUI/EmoteMenuNUI.lua`, `client/NUI/js/main.js`, `client/NUI/js/autoshot-previews.js`, `client/NUI/index.html`, `fxmanifest.lua`, and both animation catalog files against PM AutoShot's `server/emote_catalog.js` and `tools/install-previews.js`.
 
 - NUI buttons carry the exact `emoteType` and `emoteName` as `data-emotetype` and `data-emoteid`. Supported type strings match `Emotes`, `Dances`, `Exits`, `PropEmotes`.
 - Captures use `<category>_<sanitized emote key>.webp`. The installer reverses the mapping through the installed catalog, rejects collisions, and writes manifest identities `<category>:<original key>`.
@@ -67,7 +87,7 @@ Changes made during this audit:
 
 **Scope limit:** Static inspection and Node CI cannot prove actual player position/appearance restoration, screenshot-basic callbacks, native emote cancellation, or FXServer Sharp compatibility. Those are acceptance tests, not unfinished Task 2 code-audit work. Any new runtime defect found during acceptance should be recorded and fixed specifically.
 
-**Next offline task:** Task 3, exact filename/catalog/manifest/NUI integration contract across PM AutoShot and PM Emotes. Do not begin server installation as part of Task 3.
+**Completed:** Task 3 integration contract and regression validation are documented above.
 
 ## Verification evidence and release status
 
