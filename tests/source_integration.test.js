@@ -64,3 +64,5 @@ console.log('PASS: animation studio integration guardrails');
 // Active long-running uploads must refresh the session idle timeout.
 assert.match(server, /now - \(session\.updatedAt \|\| session\.created\) > ANIMATION_SESSION_TTL/);
 assert.match(server, /session\.updatedAt = Date\.now\(\)/);
+
+assert.match(server, /const ANIMATION_SESSION_TTL = 10 \* 60 \* 1000/);
