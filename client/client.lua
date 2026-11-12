@@ -1865,12 +1865,15 @@ CreateThread(function()
         if active then
             local ped = PlayerPedId()
             SuppressWorld()
-            ClearPedTasksImmediately(ped)
+            -- The legacy thumbnail studio clears ped tasks every frame.
+            -- Animation previews must preserve the running PM Emotes task,
+            -- otherwise every recorded frame is an idle pose.
+            if not animationStudioActive then ClearPedTasksImmediately(ped) end
             local target = (captureMode ~= 'clothing' and spawnedEntity and DoesEntityExist(spawnedEntity))
                 and spawnedEntity or ped
             if Customize.TransparentBg then DrawGreenScreenAndLights(target) end
-            if captureMode == 'clothing' then DrawHeadChromaMask(ped) end
-            if (isPreview or isBrowsing) and not isCapturing then
+            if captureMode == 'clothing' and not animationStudioActive then DrawHeadChromaMask(ped) end
+            if (isPreview or isBrowsing) and not isCapturing and not animationStudioActive then
                 DrawCropOverlay()
                 DrawCrosshair()
                 DrawCameraDebugOverlay()
