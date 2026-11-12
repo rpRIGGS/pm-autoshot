@@ -57,5 +57,6 @@ assert.match(server, /onNet\('uz_autoshot:server:setBucket', \(bucket\) => \{[\s
 assert.match(server, /onNet\('uz_autoshot:server:resetBucket', \(\) => \{\s*const src = source;[\s\S]*?if \(!originalCaptureBuckets\.has\(src\)\) return/);
 assert.match(server, /if \(!originalCaptureBuckets\.has\(src\)\) return;/);
 assert.match(server, /bucket restoration failed:/);
+assert.match(server, /failed to restore original routing bucket/);
 assert.match(server, /GetPlayerRoutingBucket\(String\(src\)\) === previous/);
 console.log('PASS: animation studio integration guardrails');
