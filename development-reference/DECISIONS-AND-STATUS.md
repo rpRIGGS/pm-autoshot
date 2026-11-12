@@ -25,6 +25,22 @@ Updated: 2026-11-11. This document supersedes the earlier chronological, sometim
 | Installer | WebP validation, catalog identity checks, manifest merge, dry-run and rollback | Must run against actual installed resource |
 | PM Emotes | Optional hover/focus preview overlay and NUI manifest loading | In-game NUI appearance not verified |
 
+## Task 4 — automated failure-case validation (2026-11-12)
+
+**Completed for the offline Node regression scope.** Full GitHub Actions suite passed in run 43160738776 (Node 22): catalog parser, preview installer, animated WebP encoder, and source integration checks.
+
+Additional negative and recovery tests added:
+- Encoder rejects non-array frame sets, non-integer canvas dimensions, non-buffer RGBA inputs and malformed lengths; it enforces the same maximum pixel budget as the server.
+- Animated WebP round-trip checks distinct frame content, alpha, frame count, canvas dimensions and timing through Sharp.
+- Preview installer test injects a filesystem rename failure during manifest publication and verifies rollback of the previously installed manifest and WebP bytes.
+- Existing tests retain catalog identity through sanitized filenames and reject ambiguous, orphaned, corrupt, and unsafe captures.
+
+**CI correction:** An initial new boundary test expected the exact maximum 24 × 1024 × 1024 pixels to fail, although the server deliberately permits that boundary. The expectation was corrected and the complete suite passed. This was a test-design error, not an encoder failure.
+
+**Not covered offline:** FiveM native lifecycle, screenshot-basic callbacks, real NUI rendering, server host-specific Sharp binaries, permissions, and player restoration. These require later live acceptance; no claim of live readiness follows from this validation.
+
+**Next:** Task 5 release preparation: final artifact inventory, version/release notes, and documentation reconciliation. No server installation until the agreed offline checklist is complete.
+
 ## Task 3 — preview integration contract audit (2026-11-12)
 
 **Offline integration review complete, pending final regression CI.** Cross-checked PM Emotes `types.lua`, `client/NUI/EmoteMenuNUI.lua`, `client/NUI/js/main.js`, `client/NUI/js/autoshot-previews.js`, `client/NUI/index.html`, `fxmanifest.lua`, and both animation catalog files against PM AutoShot's `server/emote_catalog.js` and `tools/install-previews.js`.
