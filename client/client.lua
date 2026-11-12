@@ -2351,6 +2351,12 @@ local studioBucketRequestId = 0
 local studioBucketResult = nil
 RegisterNetEvent('pm-autoshot:client:studioBucketResult', function(id, ok, reason)
     if id == studioBucketRequestId then
+        if not animationStudioActive then
+            -- A delayed server acknowledgement after timeout/cancel must
+            -- never leave the player isolated in the studio bucket.
+            if ok then TriggerServerEvent('uz_autoshot:server:resetBucket') end
+            return
+        end
         studioBucketResult = { ok = ok, reason = reason }
     end
 end)
