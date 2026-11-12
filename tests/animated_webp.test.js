@@ -41,5 +41,5 @@ const { encodeAnimation } = require('../server/animated_webp');
     const stride = width * height * 4;
     assert.notDeepEqual(decoded.data.subarray(0, stride), decoded.data.subarray(stride, 2 * stride));
     assert.notDeepEqual(decoded.data.subarray(stride, 2 * stride), decoded.data.subarray(2 * stride, 3 * stride));
-    console.log('Animated WebP: frame count, timing, dimensions, alpha passed');
+    console.log('Animated WebP: frame count, timing, dimensions, alpha, pixel budget and frame differences passed');
 })().catch(err => { console.error(err); process.exitCode = 1; });
