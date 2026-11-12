@@ -20,4 +20,5 @@ assert.match(bridge, /SetConvar\('uz_autoshot_studio_bucket'/);
 assert.match(server, /const activePreviewEncodes = new Set\(\)/);
 assert.match(server, /if \(activePreviewEncodes\.has\(previewName\)\)/);
 assert.match(server, /activePreviewEncodes\.delete\(reservedPreviewName\)/);
+assert.match(client, /TriggerServerEvent\('uz_autoshot:server:resetBucket'\)/);
 console.log('PASS: animation studio integration guardrails');
