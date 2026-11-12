@@ -656,8 +656,18 @@ function processCapture(src, payload) {
 onNet('uz_autoshot:server:ping', () => {
     const src = source;
     let reason = null;
-    if (!checkAnimationPermission(src)) reason = 'You lack ' + ACE_NAME + ' on the server.';
+    // Preserve upstream clothing/vehicle capture access policy.
+    if (!checkAce(src)) reason = 'You lack ' + ACE_NAME + ' on the server.';
     else if (!PNG) reason = 'pngjs missing on server. Delete .yarn.installed and restart the server.';
+    emitNet('uz_autoshot:client:pong', src, { ok: reason === null, reason: reason });
+});
+
+// Animation capture has a stricter, independent QBCore admin requirement.
+onNet('pm-autoshot:server:pingAnimation', () => {
+    const src = source;
+    let reason = null;
+    if (!checkAnimationPermission(src)) reason = 'Animation capture requires QBCore admin permission.';
+    else if (!PNG || !sharp) reason = 'Animation capture requires pngjs and sharp on the server.';
     emitNet('uz_autoshot:client:pong', src, { ok: reason === null, reason: reason });
 });
 
