@@ -69,6 +69,11 @@ RP.PropEmotes = {
   assert.equal(secondBatch.count, 4);
   assert.equal(secondBatch.entries['Emotes:wave'], 'previews/Emotes_wave.webp');
   assert.equal(secondBatch.entries['PropEmotes:coffee'], 'previews/PropEmotes_coffee.webp');
+  const oldPreview = path.join(target, 'client', 'NUI', 'previews', 'Emotes_wave.webp');
+  const oldBytes = fs.readFileSync(oldPreview);
+  fs.writeFileSync(oldPreview, Buffer.from('corrupt'));
+  assert.throws(() => install(source, target, { dryRun: true }), /Previously installed preview is invalid/);
+  fs.writeFileSync(oldPreview, oldBytes);
   // Restore fixtures for subsequent collision and corruption checks.
   for (const filename of ['Emotes_wave.webp', 'Dances_wave.webp', 'Emotes_wave_hello.webp']) {
     fs.writeFileSync(path.join(shots, filename), fakeWebP());
