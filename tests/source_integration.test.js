@@ -70,3 +70,5 @@ assert.match(server, /const ANIMATION_SESSION_TTL = 10 \* 60 \* 1000/);
 // A missing screenshot-basic export or failed latent transport must not strand the studio.
 assert.match(capture, /local screenshotOk, image, err = pcall\(screenshotFrame\)/);
 assert.match(capture, /local transportOk, ok, detail = pcall\(uploadFrame, name, i, outputInterval, sampled\[i\]\)/);
+
+assert.match(capture, /TriggerEvent\('pm-autoshot:client:closeAnimationStudio'\)/);
