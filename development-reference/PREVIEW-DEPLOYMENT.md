@@ -5,6 +5,27 @@ now contains an optional animated-preview overlay
 (`client/NUI/js/autoshot-previews.js`) that reads the deployed manifest.
 Without assets, the ordinary emote menu continues to work.
 
+## First-server-test acceptance record (fill in after testing)
+
+| Check | Expected result | Actual result |
+|---|---|---|
+| Resource starts | No Lua/JS startup errors | Not yet tested |
+| `/shotanimdoctor` | All dependencies and encoder-test OK | Not yet tested |
+| `/shotanimcatalog` | Nonzero catalog; expected keys | Not yet tested |
+| Single ordinary emote | Animated WebP under `shots/animations/` | Not yet tested |
+| Exit studio | Original position, appearance, controls, bucket restored | Not yet tested |
+| Cancel/restart | No stranded player, camera or capture session | Not yet tested |
+| Prop/scenario | Correct prop attachment and animation framing | Not yet tested |
+| Installer dry-run | Correct key-to-file mapping, no writes | Not yet tested |
+| PM Emotes hover | Animated preview appears for matching entry | Not yet tested |
+| Missing preview | PM Emotes menu still functions normally | Not yet tested |
+
+**Go/no-go:** Do not bulk-capture the catalog until the single capture, recovery and NUI checks pass. A failure is a targeted bug to fix, not authorization to restart the project or redesign PM Emotes.
+
+## Resource separation and rollback
+
+PM Emotes does not need PM AutoShot running during ordinary gameplay. It must not wait for the complete preview library to finish its NUI and gameplay features. To back out a preview deployment, stop PM Emotes and restore its previously backed-up `client/NUI/previews/` directory and `fxmanifest.lua`; restart PM Emotes. The installer attempts rollback for write failures, but a separate administrator backup is recommended before first live deployment.
+
 ## Deployment
 
 Stop both resources before copying, then run:
