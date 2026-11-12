@@ -25,4 +25,5 @@ assert.match(server, /onNet\('uz_autoshot:server:ping',[\s\S]*?checkAce\(src\)/)
 assert.match(server, /onNet\('pm-autoshot:server:pingAnimation',[\s\S]*?checkAnimationPermission\(src\)/);
 assert.match(client, /if not ServerReady\(true\) then/);
 assert.match(client, /if not animationStudioActive then ClearPedTasksImmediately/);
+assert.match(server, /if \(encodingSession\) \{\s*const partial = path\.join/);
 console.log('PASS: animation studio integration guardrails');
