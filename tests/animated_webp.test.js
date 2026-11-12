@@ -30,5 +30,16 @@ const { encodeAnimation } = require('../server/animated_webp');
     await assert.rejects(() => encodeAnimation(sharp, frames, 1025, height, delay), /invalid canvas/);
     await assert.rejects(() => encodeAnimation(sharp, frames, width, height, 0), /invalid frame delay/);
     await assert.rejects(() => encodeAnimation(sharp, [frames[0], Buffer.alloc(8)], width, height, delay), /incorrect RGBA frame length/);
+    await assert.rejects(() => encodeAnimation(sharp, null, width, height, delay), /invalid frame count/);
+    await assert.rejects(() => encodeAnimation(sharp, frames, 24.5, height, delay), /invalid canvas/);
+    await assert.rejects(() => encodeAnimation(sharp, [frames[0], 'not raw pixels'], width, height, delay), /incorrect RGBA frame length/);
+    await assert.rejects(() => encodeAnimation(sharp,
+        Array.from({ length: 24 }, () => Buffer.alloc(1024 * 1024 * 4)), 1024, 1024, delay + 1),
+        /animation pixel budget exceeded/);
+    // A valid animation must preserve frame-to-frame differences, not just
+    // metadata and alpha in the first frame.
+    const stride = width * height * 4;
+    assert.notDeepEqual(decoded.data.subarray(0, stride), decoded.data.subarray(stride, 2 * stride));
+    assert.notDeepEqual(decoded.data.subarray(stride, 2 * stride), decoded.data.subarray(2 * stride, 3 * stride));
     console.log('Animated WebP: frame count, timing, dimensions, alpha passed');
 })().catch(err => { console.error(err); process.exitCode = 1; });
