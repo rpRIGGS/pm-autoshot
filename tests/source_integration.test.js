@@ -60,3 +60,7 @@ assert.match(server, /bucket restoration failed:/);
 assert.match(server, /failed to restore original routing bucket/);
 assert.match(server, /GetPlayerRoutingBucket\(String\(src\)\) === previous/);
 console.log('PASS: animation studio integration guardrails');
+
+// Active long-running uploads must refresh the session idle timeout.
+assert.match(server, /now - \(session\.updatedAt \|\| session\.created\) > ANIMATION_SESSION_TTL/);
+assert.match(server, /session\.updatedAt = Date\.now\(\)/);
