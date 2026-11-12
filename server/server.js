@@ -678,7 +678,9 @@ onNet('pm-autoshot:server:pingAnimation', () => {
 const originalCaptureBuckets = new Map();
 onNet('uz_autoshot:server:setBucket', (bucket) => {
     const src = source;
-    if (!checkAnimationPermission(src)) return;
+    // Legacy clothing, vehicle and object captures use the original
+    // configured access policy, not the animation-only admin gate.
+    if (!checkAce(src)) return;
     const studioBucket = Number(GetConvar('uz_autoshot_studio_bucket', '999'));
     // Only the configured studio bucket is permitted; clients must not
     // choose arbitrary routing buckets via this server event.
@@ -715,7 +717,8 @@ onNet('pm-autoshot:server:enterStudioBucket', (requestId) => {
 
 onNet('uz_autoshot:server:resetBucket', () => {
     const src = source;
-    if (!checkAnimationPermission(src)) return;
+    // Reset is safe only for an existing tracked session and must work even
+    // after permissions change, to avoid trapping a player in the studio.
     if (!originalCaptureBuckets.has(src)) return;
     SetPlayerRoutingBucket(String(src), originalCaptureBuckets.get(src));
     originalCaptureBuckets.delete(src);
