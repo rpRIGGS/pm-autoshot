@@ -90,13 +90,14 @@ AddEventHandler('onClientResourceStop', function(resource)
 end)
 
 RegisterCommand('shotanimstop', function()
+    local wasPlaying = active or capturing or activeNative
     active = false
     if capturing then
         lastCaptureResult = { ok = false, name = activeCaptureName, reason = 'capture cancelled by user' }
     end
     if activeNative and GetResourceState('pm-emotes') == 'started' then
         pcall(function() exports['pm-emotes']:EmoteCancel(true) end)
-    elseif active or capturing then
+    elseif wasPlaying then
         -- Never cancel an unrelated player emote when the stop command is
         -- issued while AutoShot is idle.
         ClearPedTasksImmediately(PlayerPedId())
