@@ -106,12 +106,47 @@ function install(source, destination, { dryRun = false } = {}) {
   if (needsManifestPatch && !filesBlock.test(fx)) throw new Error('PM Emotes manifest has no files block');
   if (!dryRun) {
     fs.mkdirSync(to, { recursive: true });
-    for (const item of plan) fs.copyFileSync(item.file, path.join(to, item.filename));
-    fs.writeFileSync(path.join(to, 'manifest.json'), JSON.stringify({ version: 1, entries: manifest }, null, 2) + '\n');
-    if (needsManifestPatch) {
-      const updated = fx.replace(filesBlock, (block, body) =>
-        block.replace(body, body + "\n    'client/NUI/previews/*',"));
-      fs.writeFileSync(fxPath, updated);
+    const staged = [];
+    const backups = [];
+    const suffix = '.pm-autoshot-' + process.pid + '-' + Date.now();
+    const stage = (destinationFile, bytes) => {
+      const temp = destinationFile + suffix + '.tmp';
+      fs.writeFileSync(temp, bytes);
+      staged.push({ temp, destinationFile });
+    };
+    try {
+      for (const item of plan) stage(path.join(to, item.filename), fs.readFileSync(item.file));
+      stage(path.join(to, 'manifest.json'),
+        JSON.stringify({ version: 1, entries: manifest }, null, 2) + '\n');
+      if (needsManifestPatch) {
+        const updated = fx.replace(filesBlock, (block, body) =>
+          block.replace(body, body + "\n    'client/NUI/previews/*',"));
+        stage(fxPath, updated);
+      }
+      for (const { temp, destinationFile } of staged) {
+        const backup = destinationFile + suffix + '.bak';
+        const existed = fs.existsSync(destinationFile);
+        if (existed) fs.copyFileSync(destinationFile, backup);
+        backups.push({ destinationFile, backup, existed });
+        fs.renameSync(temp, destinationFile);
+      }
+    } catch (error) {
+      for (const { destinationFile, backup, existed } of backups.reverse()) {
+        try {
+          if (existed && fs.existsSync(backup)) fs.copyFileSync(backup, destinationFile);
+          else if (!existed && fs.existsSync(destinationFile)) fs.unlinkSync(destinationFile);
+        } catch (rollbackError) {
+          error.message += '; rollback failed for ' + destinationFile + ': ' + rollbackError.message;
+        }
+      }
+      throw error;
+    } finally {
+      for (const { temp } of staged) {
+        try { if (fs.existsSync(temp)) fs.unlinkSync(temp); } catch (_) {}
+      }
+      for (const { backup } of backups) {
+        try { if (fs.existsSync(backup)) fs.unlinkSync(backup); } catch (_) {}
+      }
     }
   }
   return { count: Object.keys(manifest).length, destination: to, dryRun, entries: manifest };
