@@ -92,3 +92,8 @@ RP.Emotes = {
 `);
 assert.deepEqual(unusual.map(item => item.key), ['special', 'normal']);
 assert.equal(unusual[0].native, true);
+
+// Identical emote names in different categories must remain distinct.
+const categories = parseCatalog(`RP.Emotes = { ["same"] = { "a", "b" } }
+RP.Dances = { ["same"] = { "c", "d" } }`);
+assert.deepEqual(categories.map(item => item.category + ':' + item.key), ['Emotes:same', 'Dances:same']);
