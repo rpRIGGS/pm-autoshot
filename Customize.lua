@@ -76,6 +76,8 @@ Customize.StudioLights = {
 
 -- Camera Presets (fov, zPos, rotation, dist, defaultAngleH, defaultCamZ, defaultRoll)
 Customize.CameraPresets = {
+    -- Full-body framing for PM Emotes; clothing presets remain untouched.
+    animation       = { fov = 46.0, zPos = 0.05, rotation = vector3(0.0, 0.0, 0.0), dist = 3.2, defaultAngleH = 0.0, defaultCamZ = 0.0, defaultRoll = 0.0 },
     hair            = { fov = 25.0, zPos = 0.72,  rotation = vector3(0.0, 0.0, 0.0),   dist = 1.2, defaultAngleH = 180.0,  defaultCamZ = 0.0,  defaultRoll = 0.0 },
     face_overlay    = { fov = 18.0, zPos = 0.68,  rotation = vector3(0.0, 0.0, 0.0),   dist = 1.2, defaultAngleH = 180.0,  defaultCamZ = 0.0,  defaultRoll = 0.0 },
     chest_overlay   = { fov = 28.1, zPos = 0.28,  rotation = vector3(0.0, 0.0, 0.0),   dist = 1.2, defaultAngleH = 178.9,  defaultCamZ = 0.06, defaultRoll = 0.0 },
