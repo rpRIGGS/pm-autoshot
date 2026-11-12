@@ -68,7 +68,9 @@ function install(source, destination, { dryRun = false } = {}) {
     plannedNames.add(lowerName);
     const file = path.join(from, filename);
     const stat = fs.lstatSync(file);
-    if (!stat.isFile() || stat.size < 20 || stat.size > 32 * 1024 * 1024) continue;
+    if (!stat.isFile()) throw new Error('Preview capture is not a regular file: ' + filename);
+    if (stat.size < 20 || stat.size > 32 * 1024 * 1024)
+      throw new Error('Invalid preview capture size: ' + filename);
     // Only deploy structurally valid animated WebP captures with 2+ frames.
     if (!validateAnimatedWebP(file, stat))
       throw new Error('Invalid WebP capture: ' + filename);
@@ -81,6 +83,8 @@ function install(source, destination, { dryRun = false } = {}) {
     manifest[key] = 'previews/' + filename;
     plan.push({ file, filename });
   }
+  if (plan.length === 0)
+    throw new Error('No valid animated WebP captures found; refusing to replace the preview manifest');
   // Deployments may be intentionally batched. Preserve previously installed
   // previews unless their assets are missing or the catalog no longer lists
   // their emote key. Do not discard earlier successful capture batches.
