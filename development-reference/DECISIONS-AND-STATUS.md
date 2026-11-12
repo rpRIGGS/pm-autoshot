@@ -25,6 +25,19 @@ Updated: 2026-11-11. This document supersedes the earlier chronological, sometim
 | Installer | WebP validation, catalog identity checks, manifest merge, dry-run and rollback | Must run against actual installed resource |
 | PM Emotes | Optional hover/focus preview overlay and NUI manifest loading | In-game NUI appearance not verified |
 
+## Task 3 — preview integration contract audit (2026-11-12)
+
+**Offline integration review complete, pending final regression CI.** Cross-checked PM Emotes `types.lua`, `client/NUI/EmoteMenuNUI.lua`, `client/NUI/js/main.js`, `client/NUI/js/autoshot-previews.js`, `client/NUI/index.html`, `fxmanifest.lua`, and both animation catalog files against PM AutoShot's `server/emote_catalog.js` and `tools/install-previews.js`.
+
+- NUI buttons carry the exact `emoteType` and `emoteName` as `data-emotetype` and `data-emoteid`. Supported type strings match `Emotes`, `Dances`, `Exits`, `PropEmotes`.
+- Captures use `<category>_<sanitized emote key>.webp`. The installer reverses the mapping through the installed catalog, rejects collisions, and writes manifest identities `<category>:<original key>`.
+- The NUI resolves those exact identities and only accepts relative `previews/*.webp` values. The manifest is intentionally absent before first deployment.
+- PM Emotes `fxmanifest.lua` already declares `client/NUI/previews/*`. The installer now rejects older/incompatible NUI resources that do not load `js/autoshot-previews.js`, before copying any files.
+- PM Emotes now clears stale overlays on button navigation, menu rebuild and mouse exit.
+- Remaining out-of-scope catalog classes (shared/animal/special) are not silently represented as completed preview coverage.
+
+This is a source-contract audit, not a claim that NUI display or capture has been verified in-game.
+
 ## Task 2 — runtime code audit closure (2026-11-12)
 
 **Offline source audit complete; live behavior unverified.** The reviewed paths cover studio entry and bucket rollback, client resource-stop cleanup, native emote cancellation, screenshot and latent-upload exceptions, frame acknowledgement, encoder dispatch, encoding cancellation, staging cleanup, filename reservation release, and inactive-session expiry.
